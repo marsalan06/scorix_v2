@@ -12,6 +12,7 @@ import {
   LogOut,
   X
 } from 'lucide-react';
+import ScorixLogo from '../common/ScorixLogo';
 
 interface SidebarProps {
   open: boolean;
@@ -68,18 +69,15 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
     <>
       {/* Mobile sidebar */}
       <div className={`fixed inset-0 z-50 lg:hidden ${open ? 'block' : 'hidden'}`}>
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setOpen(false)} />
-        <div className="fixed inset-y-0 left-0 flex w-full max-w-xs flex-col bg-white">
-          <div className="flex h-16 items-center justify-between px-4">
+        <div className="fixed inset-0 bg-dark-950 bg-opacity-75" onClick={() => setOpen(false)} />
+        <div className="fixed inset-y-0 left-0 flex w-full max-w-xs flex-col bg-dark-900">
+          <div className="flex h-16 items-center justify-between px-4 border-b border-dark-800">
             <div className="flex items-center">
-              <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center">
-                <GraduationCap className="h-6 w-6 text-white" />
-              </div>
-              <span className="ml-2 text-lg font-semibold text-gray-900">Scorix</span>
+              <ScorixLogo size="sm" />
             </div>
             <button
               onClick={() => setOpen(false)}
-              className="text-gray-400 hover:text-gray-600"
+              className="text-gray-400 hover:text-white"
             >
               <X className="h-6 w-6" />
             </button>
@@ -95,11 +93,11 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
                 }
               >
                 <item.icon className="mr-3 h-5 w-5" />
-                {item.name}
+                <span>{item.name}</span>
               </NavLink>
             ))}
           </nav>
-          <div className="border-t border-gray-200 p-4">
+          <div className="border-t border-dark-800 p-4">
             <button
               onClick={handleLogout}
               className="sidebar-item w-full text-left"
@@ -113,12 +111,9 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
 
       {/* Desktop sidebar */}
       <div className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex min-h-0 flex-1 flex-col border-r border-gray-200 bg-white">
-          <div className="flex h-16 items-center px-4">
-            <div className="h-8 w-8 bg-primary-600 rounded-lg flex items-center justify-center">
-              <GraduationCap className="h-6 w-6 text-white" />
-            </div>
-            <span className="ml-2 text-lg font-semibold text-gray-900">Scorix</span>
+        <div className="flex min-h-0 flex-1 flex-col border-r border-dark-800 bg-dark-900">
+          <div className="flex h-16 items-center px-4 border-b border-dark-800">
+            <ScorixLogo size="sm" />
           </div>
           <nav className="flex-1 space-y-1 px-2 py-4">
             {getNavigation().map((item) => (
@@ -134,7 +129,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
               </NavLink>
             ))}
           </nav>
-          <div className="border-t border-gray-200 p-4">
+          <div className="border-t border-dark-800 p-4">
             <button
               onClick={handleLogout}
               className="sidebar-item w-full text-left"
