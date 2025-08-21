@@ -22,11 +22,16 @@ const Login: React.FC = () => {
     e.preventDefault();
     setLoading(true);
     
-    const success = await login(formData);
-    if (success) {
-      navigate('/dashboard');
+    try {
+      const success = await login(formData);
+      if (success) {
+        navigate('/dashboard');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -80,7 +80,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       toast.success('Login successful!');
       return true;
     } catch (error: any) {
-      const message = error.response?.data?.error?.message || 'Login failed';
+      const message = error.response?.data?.detail || error.response?.data?.message || 'Login failed';
       toast.error(message);
       return false;
     }
@@ -92,7 +92,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       toast.success('Registration successful! Please login.');
       return true;
     } catch (error: any) {
-      const message = error.response?.data?.error?.message || 'Registration failed';
+      const message = error.response?.data?.detail || error.response?.data?.message || 'Registration failed';
       toast.error(message);
       return false;
     }

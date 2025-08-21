@@ -4,6 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { RegisterForm } from '../../types';
 import { Eye, EyeOff, Lock, Mail, GraduationCap, UserCheck, Plus, Check, FileText } from 'lucide-react';
 import ScorixLogo from '../common/ScorixLogo';
+import toast from 'react-hot-toast';
 
 type UserRole = 'tutor' | 'learner' | 'create';
 
@@ -28,18 +29,23 @@ const Register: React.FC = () => {
     e.preventDefault();
     
     if (formData.password !== formData.confirmPassword) {
-      alert('Passwords do not match');
+      toast.error('Passwords do not match');
       return;
     }
     
     setLoading(true);
     
-    const { confirmPassword, ...userData } = formData;
-    const success = await register(userData);
-    if (success) {
-      navigate('/login');
+    try {
+      const { confirmPassword, ...userData } = formData;
+      const success = await register(userData);
+      if (success) {
+        navigate('/login');
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
