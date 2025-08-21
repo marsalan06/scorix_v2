@@ -1,0 +1,218 @@
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { 
+  BookOpen, 
+  FileText, 
+  Clock, 
+  CheckCircle
+} from 'lucide-react';
+import { coursesAPI, testsAPI, studentAnswersAPI } from '../../services/api';
+import { Course, Test, StudentAnswer } from '../../types';
+
+const StudentDashboard: React.FC = () => {
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [tests, setTests] = useState<Test[]>([]);
+  const [answers, setAnswers] = useState<StudentAnswer[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const [coursesRes, testsRes, answersRes] = await Promise.all([
+        coursesAPI.getStudentCourses(),
+        testsAPI.getTeacherTests(), // This will need to be filtered for student's courses
+        studentAnswersAPI.getStudentAnswers(),
+      ]);
+      
+      setCourses(coursesRes.data);
+      setTests(testsRes.data);
+      setAnswers(answersRes.data);
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const stats = [
+    {
+      name: 'Enrolled Courses',
+      value: courses.length,
+      icon: BookOpen,
+      color: 'bg-blue-500',
+      href: '/dashboard/courses',
+    },
+    {
+      name: 'Available Tests',
+      value: tests.filter(test => test.is_active).length,
+      icon: FileText,
+      color: 'bg-green-500',
+      href: '/dashboard/tests',
+    },
+    {
+      name: 'Submitted Answers',
+      value: answers.length,
+      icon: CheckCircle,
+      color: 'bg-purple-500',
+      href: '/dashboard/answers',
+    },
+    {
+      name: 'Pending Tests',
+      value: tests.filter(test => test.is_active).length, // Simplified for now
+      icon: Clock,
+      color: 'bg-orange-500',
+      href: '/dashboard/tests',
+    },
+  ];
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Welcome Section */}
+      <div className="bg-gradient-to-r from-green-600 to-green-700 rounded-lg p-6 text-white">
+        <h1 className="text-2xl font-bold">Welcome, Student!</h1>
+        <p className="text-green-100 mt-2">
+          Access your courses, take tests, and view your progress with AI-powered feedback.
+        </p>
+      </div>
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {stats.map((stat) => (
+          <Link
+            key={stat.name}
+            to={stat.href}
+            className="card hover:shadow-md transition-shadow cursor-pointer"
+          >
+            <div className="flex items-center">
+              <div className={`${stat.color} p-3 rounded-lg`}>
+                <stat.icon className="h-6 w-6 text-white" />
+              </div>
+              <div className="ml-4">
+                <p className="text-sm font-medium text-gray-600">{stat.name}</p>
+                <p className="text-2xl font-semibold text-gray-900">{stat.value}</p>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {/* Enrolled Courses */}
+      <div className="card">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-gray-900">Your Courses</h2>
+          <Link
+            to="/dashboard/courses"
+            className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+          >
+            View all courses →
+          </Link>
+        </div>
+        
+        {courses.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {courses.map((course) => (
+              <div key={course.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <h3 className="font-medium text-gray-900">{course.title}</h3>
+                    <p className="text-sm text-gray-600 mt-1">{course.subject}</p>
+                    <p className="text-xs text-gray-500 mt-1">Academic Year: {course.academic_year}</p>
+                  </div>
+                  <BookOpen className="h-5 w-5 text-gray-400" />
+                </div>
+                {course.description && (
+                  <p className="text-sm text-gray-600 mt-2 line-clamp-2">{course.description}</p>
+                )}
+                <div className="mt-3 pt-3 border-t border-gray-100">
+                  <Link
+                    to={`/dashboard/courses/${course.id}`}
+                    className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+                  >
+                    View Course →
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8">
+            <BookOpen className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No courses enrolled</h3>
+            <p className="mt-1 text-sm text-gray-500">Get started by enrolling in a course.</p>
+          </div>
+        )}
+      </div>
+
+      {/* Recent Activity */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Recent Tests */}
+        <div className="card">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Tests</h3>
+          {tests.length > 0 ? (
+            <div className="space-y-3">
+              {tests.slice(0, 3).map((test) => (
+                <div key={test.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div>
+                    <h4 className="font-medium text-gray-900">{test.title}</h4>
+                    <p className="text-sm text-gray-600">{test.duration_minutes} minutes</p>
+                  </div>
+                  <div className="text-right">
+                    <span className="text-sm text-gray-500">{test.total_points} points</span>
+                    <div className="flex items-center mt-1">
+                      {test.is_active ? (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                          Inactive
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-4">No tests available</p>
+          )}
+        </div>
+
+        {/* Recent Submissions */}
+        <div className="card">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Submissions</h3>
+          {answers.length > 0 ? (
+            <div className="space-y-3">
+              {answers.slice(0, 3).map((answer) => (
+                <div key={answer.id} className="p-3 bg-gray-50 rounded-lg">
+                  <h4 className="font-medium text-gray-900 line-clamp-2">{answer.answer}</h4>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-sm text-gray-600">Question ID: {answer.question_id}</span>
+                    <span className="text-sm text-gray-500">
+                      {new Date(answer.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-500 text-center py-4">No submissions yet</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default StudentDashboard;
