@@ -88,7 +88,7 @@ const Register: React.FC = () => {
               className={`btn-role ${selectedRole === 'tutor' ? 'active' : ''}`}
             >
               <UserCheck className="w-5 h-5" />
-              <span>Sign in as a tutor</span>
+              <span>Create account as a tutor</span>
             </button>
             
             <button
@@ -96,7 +96,7 @@ const Register: React.FC = () => {
               className={`btn-role ${selectedRole === 'learner' ? 'active' : ''}`}
             >
               <GraduationCap className="w-5 h-5" />
-              <span>Sign in as a learner</span>
+              <span>Create account as a learner</span>
             </button>
             
             <button
@@ -154,6 +154,30 @@ const Register: React.FC = () => {
             </div>
 
             <div>
+              <label htmlFor="username" className="block text-sm font-medium text-white mb-2">
+                Username
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                  <UserCheck className="h-5 w-5 text-gray-400" />
+                </div>
+                <input
+                  id="username"
+                  name="username"
+                  type="text"
+                  required
+                  className="input-field pl-12"
+                  placeholder="Choose a username"
+                  value={formData.username}
+                  onChange={handleChange}
+                />
+              </div>
+              <p className="text-xs text-gray-400 mt-1">
+                Choose a unique username for login (different from your email)
+              </p>
+            </div>
+
+            <div>
               <label htmlFor="email" className="block text-sm font-medium text-white mb-2">
                 Your email address
               </label>
@@ -172,6 +196,9 @@ const Register: React.FC = () => {
                   onChange={handleChange}
                 />
               </div>
+              <p className="text-xs text-gray-400 mt-1">
+                Email is used for account recovery and notifications
+              </p>
             </div>
 
             <div>

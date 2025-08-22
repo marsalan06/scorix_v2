@@ -26,7 +26,8 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // Only handle 401 errors for authenticated requests (not for login attempts)
+    if (error.response?.status === 401 && error.config?.url !== '/auth/login') {
       localStorage.removeItem('token');
       window.location.href = '/login';
     }

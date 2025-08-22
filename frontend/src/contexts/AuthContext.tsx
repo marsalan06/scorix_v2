@@ -3,12 +3,18 @@ import { api } from '../services/api';
 import toast from 'react-hot-toast';
 import { User, UserLogin, UserUpdate } from '../types';
 
+interface LoginResult {
+  success: boolean;
+  shouldRedirectToRegister?: boolean;
+  message?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   token: string | null;
   loading: boolean;
   isAuthenticated: boolean;
-  login: (credentials: UserLogin) => Promise<boolean>;
+  login: (credentials: UserLogin) => Promise<LoginResult>;
   register: (userData: any) => Promise<boolean>;
   logout: () => void;
   updateProfile: (profileData: UserUpdate) => Promise<boolean>;
@@ -65,7 +71,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, [token, fetchUserProfile]);
 
-  const login = async (credentials: UserLogin): Promise<boolean> => {
+  const login = async (credentials: UserLogin): Promise<LoginResult> => {
     try {
       const response = await api.post('/auth/login', credentials);
       const { access_token } = response.data;
@@ -78,11 +84,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       await fetchUserProfile();
       toast.success('Login successful!');
-      return true;
+      return { success: true };
     } catch (error: any) {
       const message = error.response?.data?.detail || error.response?.data?.message || 'Login failed';
+      const status = error.response?.status;
+      
+      // For login failures, redirect to register for all 401 errors
+      if (status === 401) {
+        return { 
+          success: false, 
+          shouldRedirectToRegister: true, 
+          message: 'Invalid credentials. Please check your username and password, or create a new account.' 
+        };
+      }
+      
+      // For other errors, show the error message
       toast.error(message);
-      return false;
+      return { success: false, message };
     }
   };
 

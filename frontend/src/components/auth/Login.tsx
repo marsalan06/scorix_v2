@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { UserLogin } from '../../types';
-import { Eye, EyeOff, Lock, Mail, GraduationCap, UserCheck, Plus, Check } from 'lucide-react';
+import { Eye, EyeOff, Lock, GraduationCap, UserCheck, Plus, Check } from 'lucide-react';
 import ScorixLogo from '../common/ScorixLogo';
+import toast from 'react-hot-toast';
 
 type UserRole = 'tutor' | 'learner' | 'create';
 
@@ -15,17 +16,39 @@ const Login: React.FC = () => {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [shouldRedirect, setShouldRedirect] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();
+
+  // Handle redirect using useEffect
+  useEffect(() => {
+    if (shouldRedirect) {
+      navigate('/register');
+      // Reset the flag after navigation
+      setShouldRedirect(false);
+    }
+  }, [shouldRedirect, navigate]);
+
+  // Cleanup effect when component unmounts
+  useEffect(() => {
+    return () => {
+      setShouldRedirect(false);
+    };
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     
     try {
-      const success = await login(formData);
-      if (success) {
+      const result = await login(formData);
+      
+      if (result.success) {
         navigate('/dashboard');
+      } else if (result.shouldRedirectToRegister) {
+        // Show error message in floating window
+        toast.error(result.message || 'User not found. Please create an account first.');
+        setShouldRedirect(true);
       }
     } catch (error) {
       console.error('Login error:', error);
@@ -72,7 +95,7 @@ const Login: React.FC = () => {
               className={`btn-role ${selectedRole === 'tutor' ? 'active' : ''}`}
             >
               <UserCheck className="w-5 h-5" />
-              <span>Sign in as a tutor</span>
+              <span>I am a tutor</span>
             </button>
             
             <button
@@ -80,7 +103,7 @@ const Login: React.FC = () => {
               className={`btn-role ${selectedRole === 'learner' ? 'active' : ''}`}
             >
               <GraduationCap className="w-5 h-5" />
-              <span>Sign in as a learner</span>
+              <span>I am a learner</span>
             </button>
             
             <button
@@ -96,19 +119,19 @@ const Login: React.FC = () => {
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-white mb-2">
-                Registered email address
+                Username
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+                  <UserCheck className="h-5 w-5 text-gray-400" />
                 </div>
                 <input
                   id="username"
                   name="username"
-                  type="email"
+                  type="text"
                   required
                   className="input-field pl-12"
-                  placeholder="Type your email"
+                  placeholder="Type your username"
                   value={formData.username}
                   onChange={handleChange}
                 />
@@ -173,6 +196,18 @@ const Login: React.FC = () => {
                 >
                   click here
                 </Link>
+              </p>
+              <p className="text-sm text-gray-400 mt-2">
+                Don't have an account?{' '}
+                <Link
+                  to="/register"
+                  className="text-accent hover:underline"
+                >
+                  Register here
+                </Link>
+              </p>
+              <p className="text-xs text-gray-500 mt-2">
+                Note: Use your username, not your email address
               </p>
             </div>
           </form>
