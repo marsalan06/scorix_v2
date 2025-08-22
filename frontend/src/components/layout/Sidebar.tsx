@@ -1,5 +1,5 @@
-import React from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useState, useMemo } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
   Home, 
@@ -21,9 +21,10 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
   const { user, logout } = useAuth();
+  const location = useLocation();
 
   const navigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: Home },
+    { name: 'Dashboard', href: '/dashboard', icon: Home, end: true },
     { name: 'Courses', href: '/dashboard/courses', icon: BookOpen },
     { name: 'Questions', href: '/dashboard/questions', icon: HelpCircle },
     { name: 'Tests', href: '/dashboard/tests', icon: FileText },
@@ -33,7 +34,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
   ];
 
   const studentNavigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: Home },
+    { name: 'Dashboard', href: '/dashboard', icon: Home, end: true },
     { name: 'My Courses', href: '/dashboard/courses', icon: BookOpen },
     { name: 'My Tests', href: '/dashboard/tests', icon: FileText },
     { name: 'My Answers', href: '/dashboard/answers', icon: Users },
@@ -41,7 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
   ];
 
   const adminNavigation = [
-    { name: 'Dashboard', href: '/dashboard', icon: Home },
+    { name: 'Dashboard', href: '/dashboard', icon: Home, end: true },
     { name: 'All Courses', href: '/dashboard/courses', icon: BookOpen },
     { name: 'All Questions', href: '/dashboard/questions', icon: HelpCircle },
     { name: 'All Tests', href: '/dashboard/tests', icon: FileText },
@@ -84,17 +85,21 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
           </div>
           <nav className="flex-1 space-y-1 px-2 py-4">
             {getNavigation().map((item) => (
-              <NavLink
+              <div
                 key={item.name}
-                to={item.href}
                 onClick={() => setOpen(false)}
-                className={({ isActive }) =>
-                  `sidebar-item ${isActive ? 'active' : ''}`
-                }
               >
-                <item.icon className="mr-3 h-5 w-5" />
-                <span>{item.name}</span>
-              </NavLink>
+                <NavLink
+                  to={item.href}
+                  end={item.end}
+                  className={({ isActive }) => 
+                    `sidebar-item ${isActive ? 'active' : ''}`
+                  }
+                >
+                  <item.icon className="mr-3 h-5 w-5" />
+                  <span>{item.name}</span>
+                </NavLink>
+              </div>
             ))}
           </nav>
           <div className="border-t border-dark-800 p-4">
@@ -120,7 +125,8 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
               <NavLink
                 key={item.name}
                 to={item.href}
-                className={({ isActive }) =>
+                end={item.end}
+                className={({ isActive }) => 
                   `sidebar-item ${isActive ? 'active' : ''}`
                 }
               >
