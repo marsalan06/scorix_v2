@@ -21,6 +21,10 @@
     @apply bg-dark-800 text-white font-semibold py-3 px-6 rounded-lg border-2 border-dark-700 hover:bg-dark-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-dark-950;
   }
   
+  .btn-danger {
+    @apply bg-red-600 text-white font-semibold py-3 px-6 rounded-lg border-2 border-red-600 hover:bg-red-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:ring-offset-dark-950;
+  }
+  
   .btn-role {
     @apply bg-dark-800 text-white font-semibold py-4 px-6 rounded-lg border-2 border-dark-700 hover:bg-dark-700 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 focus:ring-offset-dark-950 flex items-center justify-center space-x-3 w-full;
   }
@@ -68,4 +72,30 @@
   .text-accent {
     @apply text-primary-500 font-medium;
   }
+  
+  .bg-primary-500 {
+    @apply bg-blue-500;
+  }
+  
+  .bg-primary-600 {
+    @apply bg-blue-600;
+  }
+  
+  .bg-primary-700 {
+    @apply bg-blue-700;
+  }
+  
+  .border-primary-500 {
+    @apply border-blue-500;
+  }
+  
+  .border-primary-600 {
+    @apply border-blue-600;
+  }
+  
+  .text-primary-500 {
+    @apply text-blue-500;
+  }
+  
+
 }

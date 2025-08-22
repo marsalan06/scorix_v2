@@ -7,6 +7,7 @@ import TeacherDashboard from './dashboard/TeacherDashboard';
 import StudentDashboard from './dashboard/StudentDashboard';
 import AdminDashboard from './dashboard/AdminDashboard';
 import CourseManagement from './courses/CourseManagement';
+import StudentCourses from './courses/StudentCourses';
 import QuestionManagement from './questions/QuestionManagement';
 import TestManagement from './tests/TestManagement';
 import GradingInterface from './grading/GradingInterface';
@@ -45,7 +46,9 @@ const Dashboard: React.FC = () => {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <Routes>
               <Route path="/" element={getDashboardContent()} />
-              <Route path="/courses" element={<CourseManagement />} />
+              <Route path="/courses" element={
+                user.role === 'student' ? <StudentCourses /> : <CourseManagement />
+              } />
               <Route path="/questions" element={<QuestionManagement />} />
               <Route path="/tests" element={<TestManagement />} />
               <Route path="/grading" element={<GradingInterface />} />
