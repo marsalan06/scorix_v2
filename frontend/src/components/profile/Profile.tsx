@@ -50,7 +50,7 @@ const Profile: React.FC = () => {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Profile</h1>
+        <h1 className="heading-secondary">Profile</h1>
         {!isEditing && (
           <button
             onClick={() => setIsEditing(true)}
@@ -68,11 +68,11 @@ const Profile: React.FC = () => {
             <User className="h-10 w-10 text-white" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-xl font-semibold text-white">
               {user.first_name} {user.last_name}
             </h2>
-            <p className="text-gray-600 capitalize">{user.role}</p>
-            <p className="text-sm text-gray-500">
+            <p className="text-gray-300 capitalize">{user.role}</p>
+            <p className="text-sm text-gray-400">
               Member since {new Date(user.created_at).toLocaleDateString()}
             </p>
           </div>
@@ -82,7 +82,7 @@ const Profile: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label htmlFor="first_name" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="first_name" className="block text-sm font-medium text-gray-300 mb-1">
                   First Name
                 </label>
                 <input
@@ -96,7 +96,7 @@ const Profile: React.FC = () => {
                 />
               </div>
               <div>
-                <label htmlFor="last_name" className="block text-sm font-medium text-gray-700 mb-1">
+                <label htmlFor="last_name" className="block text-sm font-medium text-gray-300 mb-1">
                   Last Name
                 </label>
                 <input
@@ -112,7 +112,7 @@ const Profile: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="username" className="block text-sm font-medium text-gray-300 mb-1">
                 Username
               </label>
               <input
@@ -127,7 +127,7 @@ const Profile: React.FC = () => {
             </div>
 
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
                 Email
               </label>
               <input
@@ -164,24 +164,24 @@ const Profile: React.FC = () => {
               <div className="flex items-center space-x-3">
                 <User className="h-5 w-5 text-gray-400" />
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Full Name</p>
-                  <p className="text-gray-900">{user.first_name} {user.last_name}</p>
+                  <p className="text-sm font-medium text-gray-400">Full Name</p>
+                  <p className="text-white">{user.first_name} {user.last_name}</p>
                 </div>
               </div>
               
               <div className="flex items-center space-x-3">
                 <User className="h-5 w-5 text-gray-400" />
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Username</p>
-                  <p className="text-gray-900">{user.username}</p>
+                  <p className="text-sm font-medium text-gray-400">Username</p>
+                  <p className="text-white">{user.username}</p>
                 </div>
               </div>
 
               <div className="flex items-center space-x-3">
                 <Mail className="h-5 w-5 text-gray-400" />
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Email</p>
-                  <p className="text-gray-900">{user.email}</p>
+                  <p className="text-sm font-medium text-gray-400">Email</p>
+                  <p className="text-white">{user.email}</p>
                 </div>
               </div>
             </div>
@@ -190,16 +190,16 @@ const Profile: React.FC = () => {
               <div className="flex items-center space-x-3">
                 <Shield className="h-5 w-5 text-gray-400" />
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Role</p>
-                  <p className="text-gray-900 capitalize">{user.role}</p>
+                  <p className="text-sm font-medium text-gray-400">Role</p>
+                  <p className="text-white capitalize">{user.role}</p>
                 </div>
               </div>
 
               <div className="flex items-center space-x-3">
                 <Calendar className="h-5 w-5 text-gray-400" />
                 <div>
-                  <p className="text-sm font-medium text-gray-500">Member Since</p>
-                  <p className="text-gray-900">
+                  <p className="text-sm font-medium text-gray-400">Member Since</p>
+                  <p className="text-white">
                     {new Date(user.created_at).toLocaleDateString()}
                   </p>
                 </div>
@@ -209,8 +209,8 @@ const Profile: React.FC = () => {
                 <div className="flex items-center space-x-3">
                   <Calendar className="h-5 w-5 text-gray-400" />
                   <div>
-                    <p className="text-sm font-medium text-gray-500">Last Login</p>
-                    <p className="text-gray-900">
+                    <p className="text-sm font-medium text-gray-400">Last Login</p>
+                    <p className="text-white">
                       {new Date(user.last_login).toLocaleDateString()}
                     </p>
                   </div>
@@ -223,30 +223,30 @@ const Profile: React.FC = () => {
 
       {/* Account Security */}
       <div className="card">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Account Security</h3>
+        <h3 className="text-lg font-semibold text-white mb-4">Account Security</h3>
         <div className="space-y-3">
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center justify-between p-3 bg-dark-800 rounded-lg">
             <div className="flex items-center">
-              <Shield className="h-5 w-5 text-green-600 mr-3" />
+              <Shield className="h-5 w-5 text-green-400 mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-900">Two-Factor Authentication</p>
-                <p className="text-xs text-gray-500">Add an extra layer of security</p>
+                <p className="text-sm font-medium text-white">Two-Factor Authentication</p>
+                <p className="text-xs text-gray-400">Add an extra layer of security</p>
               </div>
             </div>
-            <button className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+            <button className="text-sm text-primary-400 hover:text-primary-300 font-medium">
               Enable
             </button>
           </div>
           
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div className="flex items-center justify-between p-3 bg-dark-800 rounded-lg">
             <div className="flex items-center">
-              <Mail className="h-5 w-5 text-blue-600 mr-3" />
+              <Mail className="h-5 w-5 text-blue-400 mr-3" />
               <div>
-                <p className="text-sm font-medium text-gray-900">Email Notifications</p>
-                <p className="text-xs text-gray-500">Get notified about important updates</p>
+                <p className="text-sm font-medium text-white">Email Notifications</p>
+                <p className="text-xs text-gray-400">Get notified about important updates</p>
               </div>
             </div>
-            <button className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+            <button className="text-sm text-primary-400 hover:text-primary-300 font-medium">
               Configure
             </button>
           </div>

@@ -2,20 +2,20 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { RegisterForm } from '../../types';
-import { Eye, EyeOff, Lock, Mail, GraduationCap, UserCheck, Plus, Check, FileText } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, GraduationCap, UserCheck, Check, FileText } from 'lucide-react';
 import ScorixLogo from '../common/ScorixLogo';
 import toast from 'react-hot-toast';
 
-type UserRole = 'tutor' | 'learner' | 'create';
+type UserRole = 'tutor' | 'learner';
 
 const Register: React.FC = () => {
-  const [selectedRole, setSelectedRole] = useState<UserRole>('create');
+  const [selectedRole, setSelectedRole] = useState<UserRole>('tutor');
   const [formData, setFormData] = useState<RegisterForm>({
     username: '',
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'student',
+    role: 'teacher', // Set default role
     first_name: '',
     last_name: '',
   });
@@ -32,11 +32,17 @@ const Register: React.FC = () => {
       toast.error('Passwords do not match');
       return;
     }
+
+    if (!formData.role) {
+      toast.error('Please select a role (Tutor or Learner)');
+      return;
+    }
     
     setLoading(true);
     
     try {
       const { confirmPassword, ...userData } = formData;
+      console.log('Submitting registration with data:', userData);
       const success = await register(userData);
       if (success) {
         navigate('/login');
@@ -84,6 +90,7 @@ const Register: React.FC = () => {
           {/* Role Selection Buttons */}
           <div className="space-y-3">
             <button
+              type="button"
               onClick={() => handleRoleSelect('tutor')}
               className={`btn-role ${selectedRole === 'tutor' ? 'active' : ''}`}
             >
@@ -92,20 +99,28 @@ const Register: React.FC = () => {
             </button>
             
             <button
+              type="button"
               onClick={() => handleRoleSelect('learner')}
               className={`btn-role ${selectedRole === 'learner' ? 'active' : ''}`}
             >
               <GraduationCap className="w-5 h-5" />
               <span>Create account as a learner</span>
             </button>
-            
-            <button
-              onClick={() => handleRoleSelect('create')}
-              className={`btn-role ${selectedRole === 'create' ? 'active' : ''}`}
-            >
-              <Plus className="w-5 h-5" />
-              <span>Create Account</span>
-            </button>
+          </div>
+
+          {/* Selected Role Display */}
+          <div className="text-center p-3 bg-dark-800 rounded-lg border border-accent">
+            <p className="text-sm text-gray-300">
+              Selected Role: <span className="text-accent font-semibold">
+                {selectedRole === 'tutor' ? 'Teacher' : 'Student'}
+              </span>
+            </p>
+            <p className="text-xs text-gray-400 mt-1">
+              {selectedRole === 'tutor' 
+                ? 'You will be able to create courses, questions, and grade student submissions.'
+                : 'You will be able to enroll in courses, submit answers, and take tests.'
+              }
+            </p>
           </div>
 
           {/* Registration Form */}

@@ -7,6 +7,7 @@ interface LoginResult {
   success: boolean;
   shouldRedirectToRegister?: boolean;
   message?: string;
+  userRole?: string; // Add user role to the result
 }
 
 interface AuthContextType {
@@ -50,9 +51,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await api.get('/users/profile');
       setUser(response.data);
+      return response.data; // Return the user data
     } catch (error) {
       console.error('Failed to fetch user profile:', error);
       clearAuth();
+      return null; // Return null on error
     } finally {
       setLoading(false);
     }
@@ -82,9 +85,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Set the token in axios headers
       api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       
-      await fetchUserProfile();
-      toast.success('Login successful!');
-      return { success: true };
+      // Get user profile to extract role
+      const userProfile = await fetchUserProfile();
+      const userRole = userProfile?.role;
+      
+      return { 
+        success: true, 
+        userRole: userRole 
+      };
     } catch (error: any) {
       const message = error.response?.data?.detail || error.response?.data?.message || 'Login failed';
       const status = error.response?.status;

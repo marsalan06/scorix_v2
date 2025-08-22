@@ -38,15 +38,34 @@ const Login: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validate that a role is selected
+    if (selectedRole === 'create') {
+      toast.error('Please select your role (Tutor or Learner) before logging in');
+      return;
+    }
+    
     setLoading(true);
     
     try {
       const result = await login(formData);
       
-      if (result.success) {
+      if (result.success && result.userRole) {
+        // Validate role match
+        const expectedRole = selectedRole === 'tutor' ? 'teacher' : 'student';
+        const actualRole = result.userRole;
+        
+        if (expectedRole !== actualRole) {
+          // Role mismatch - show error and don't redirect
+          toast.error(`Role mismatch! You selected "${selectedRole === 'tutor' ? 'Tutor' : 'Learner'}" but your account is registered as a "${actualRole === 'teacher' ? 'Teacher' : 'Student'}". Please select the correct role.`);
+          setLoading(false);
+          return;
+        }
+        
+        // Role matches - proceed to dashboard
+        toast.success('Login successful!');
         navigate('/dashboard');
       } else if (result.shouldRedirectToRegister) {
-        // Show error message in floating window
         toast.error(result.message || 'User not found. Please create an account first.');
         setShouldRedirect(true);
       }
@@ -91,6 +110,7 @@ const Login: React.FC = () => {
           {/* Role Selection Buttons */}
           <div className="space-y-3">
             <button
+              type="button"
               onClick={() => handleRoleSelect('tutor')}
               className={`btn-role ${selectedRole === 'tutor' ? 'active' : ''}`}
             >
@@ -99,6 +119,7 @@ const Login: React.FC = () => {
             </button>
             
             <button
+              type="button"
               onClick={() => handleRoleSelect('learner')}
               className={`btn-role ${selectedRole === 'learner' ? 'active' : ''}`}
             >
@@ -107,6 +128,7 @@ const Login: React.FC = () => {
             </button>
             
             <button
+              type="button"
               onClick={() => handleRoleSelect('create')}
               className={`btn-role ${selectedRole === 'create' ? 'active' : ''}`}
             >
@@ -114,6 +136,23 @@ const Login: React.FC = () => {
               <span>Create Account</span>
             </button>
           </div>
+
+          {/* Selected Role Display */}
+          {selectedRole !== 'create' && (
+            <div className="text-center p-3 bg-dark-800 rounded-lg border border-accent">
+              <p className="text-sm text-gray-300">
+                Login as: <span className="text-accent font-semibold">
+                  {selectedRole === 'tutor' ? 'Teacher' : 'Student'}
+                </span>
+              </p>
+              <p className="text-xs text-gray-400 mt-1">
+                {selectedRole === 'tutor' 
+                  ? 'Access teacher features: courses, questions, grading'
+                  : 'Access student features: enrollments, submissions, tests'
+                }
+              </p>
+            </div>
+          )}
 
           {/* Login Form */}
           <form className="space-y-6" onSubmit={handleSubmit}>
@@ -208,6 +247,9 @@ const Login: React.FC = () => {
               </p>
               <p className="text-xs text-gray-500 mt-2">
                 Note: Use your username, not your email address
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Make sure to select the correct role that matches your account type
               </p>
             </div>
           </form>
