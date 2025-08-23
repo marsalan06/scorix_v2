@@ -41,6 +41,7 @@ export interface Course {
   academic_year: string;
   teacher_id: string;
   student_ids: string[];
+  question_count?: number;
   created_at: string;
   updated_at: string;
 }

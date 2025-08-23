@@ -54,6 +54,17 @@ const Dashboard: React.FC = () => {
               <Route path="/grading" element={<GradingInterface />} />
               <Route path="/answers" element={<StudentAnswers />} />
               <Route path="/profile" element={<Profile />} />
+              
+              {/* Dashboard-specific routes to match sidebar navigation */}
+              <Route path="/dashboard" element={getDashboardContent()} />
+              <Route path="/dashboard/courses" element={
+                user.role === 'student' ? <StudentCourses /> : <CourseManagement />
+              } />
+              <Route path="/dashboard/questions" element={<QuestionManagement />} />
+              <Route path="/dashboard/tests" element={<TestManagement />} />
+              <Route path="/dashboard/grading" element={<GradingInterface />} />
+              <Route path="/dashboard/answers" element={<StudentAnswers />} />
+              <Route path="/dashboard/profile" element={<Profile />} />
             </Routes>
           </div>
         </main>
