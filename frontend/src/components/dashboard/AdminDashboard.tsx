@@ -97,8 +97,8 @@ const AdminDashboard: React.FC = () => {
                 <stat.icon className="h-6 w-6 text-white" />
               </div>
               <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">{stat.name}</p>
-                <p className="text-2xl font-semibold text-gray-900">{stat.value}</p>
+                <p className="text-sm font-medium text-gray-300">{stat.name}</p>
+                <p className="text-2xl font-semibold text-white">{stat.value}</p>
               </div>
             </div>
           </Link>
@@ -107,7 +107,7 @@ const AdminDashboard: React.FC = () => {
 
       {/* Quick Actions */}
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">Administrative Actions</h2>
+        <h2 className="text-lg font-semibold text-white mb-4">Administrative Actions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {quickActions.map((action) => (
             <Link
@@ -131,55 +131,55 @@ const AdminDashboard: React.FC = () => {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* System Health */}
         <div className="card">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">System Health</h3>
+          <h3 className="text-lg font-semibold text-white mb-4">System Health</h3>
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-dark-800 rounded-lg">
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-                <span className="text-sm font-medium text-gray-900">API Status</span>
+                <span className="text-sm font-medium text-white">API Status</span>
               </div>
-              <span className="text-sm text-green-600 font-medium">Healthy</span>
+              <span className="text-sm text-green-400 font-medium">Healthy</span>
             </div>
-            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-dark-800 rounded-lg">
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-                <span className="text-sm font-medium text-gray-900">Database</span>
+                <span className="text-sm font-medium text-white">Database</span>
               </div>
-              <span className="text-sm text-green-600 font-medium">Connected</span>
+              <span className="text-sm text-green-400 font-medium">Connected</span>
             </div>
-            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+            <div className="flex items-center justify-between p-3 bg-dark-800 rounded-lg">
               <div className="flex items-center">
                 <div className="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-                <span className="text-sm font-medium text-gray-900">AI Grading</span>
+                <span className="text-sm font-medium text-white">AI Grading</span>
               </div>
-              <span className="text-sm text-green-600 font-medium">Active</span>
+              <span className="text-sm text-green-400 font-medium">Active</span>
             </div>
           </div>
         </div>
 
         {/* Recent Activity */}
         <div className="card">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent System Activity</h3>
+          <h3 className="text-lg font-semibold text-white mb-4">Recent System Activity</h3>
           <div className="space-y-3">
-            <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center p-3 bg-dark-800 rounded-lg">
               <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
               <div className="flex-1">
-                <p className="text-sm text-gray-900">New user registration</p>
-                <p className="text-xs text-gray-500">2 minutes ago</p>
+                <p className="text-sm text-white">New user registration</p>
+                <p className="text-xs text-gray-400">2 minutes ago</p>
               </div>
             </div>
-            <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center p-3 bg-dark-800 rounded-lg">
               <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
               <div className="flex-1">
-                <p className="text-sm text-gray-900">Course created</p>
-                <p className="text-xs text-gray-500">15 minutes ago</p>
+                <p className="text-sm text-white">Course created</p>
+                <p className="text-xs text-gray-400">15 minutes ago</p>
               </div>
             </div>
-            <div className="flex items-center p-3 bg-gray-50 rounded-lg">
+            <div className="flex items-center p-3 bg-dark-800 rounded-lg">
               <div className="w-2 h-2 bg-purple-500 rounded-full mr-3"></div>
               <div className="flex-1">
-                <p className="text-sm text-gray-900">AI grading completed</p>
-                <p className="text-xs text-gray-500">1 hour ago</p>
+                <p className="text-sm text-white">AI grading completed</p>
+                <p className="text-xs text-gray-400">1 hour ago</p>
               </div>
             </div>
           </div>
@@ -188,28 +188,28 @@ const AdminDashboard: React.FC = () => {
 
       {/* Quick Links */}
       <div className="card">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Links</h3>
+        <h3 className="text-lg font-semibold text-white mb-4">Quick Links</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Link
             to="/dashboard/courses"
-            className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            className="flex items-center p-3 border border-dark-700 rounded-lg hover:bg-dark-800 transition-colors"
           >
-            <BookOpen className="h-5 w-5 text-blue-600 mr-3" />
-            <span className="text-sm font-medium text-gray-900">Manage Courses</span>
+            <BookOpen className="h-5 w-5 text-blue-400 mr-3" />
+            <span className="text-sm font-medium text-white">Manage Courses</span>
           </Link>
           <Link
             to="/dashboard/questions"
-            className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            className="flex items-center p-3 border border-dark-700 rounded-lg hover:bg-dark-800 transition-colors"
           >
-            <HelpCircle className="h-5 w-5 text-green-600 mr-3" />
-            <span className="text-sm font-medium text-gray-900">Manage Questions</span>
+            <HelpCircle className="h-5 w-5 text-green-400 mr-3" />
+            <span className="text-sm font-medium text-white">Manage Questions</span>
           </Link>
           <Link
             to="/dashboard/grading"
-            className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"
+            className="flex items-center p-3 border border-dark-700 rounded-lg hover:bg-dark-800 transition-colors"
           >
-            <GraduationCap className="h-5 w-5 text-purple-600 mr-3" />
-            <span className="text-sm font-medium text-gray-900">Grading System</span>
+            <GraduationCap className="h-5 w-5 text-purple-400 mr-3" />
+            <span className="text-sm font-medium text-white">Grading System</span>
           </Link>
         </div>
       </div>

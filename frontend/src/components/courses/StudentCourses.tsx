@@ -53,16 +53,16 @@ const StudentCourses: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">My Courses</h1>
-        <p className="text-gray-600">View your enrolled courses and available tests</p>
+        <h1 className="text-2xl font-bold text-white">My Courses</h1>
+        <p className="text-gray-300">View your enrolled courses and available tests</p>
       </div>
 
       {/* Courses Grid */}
       {courses.length === 0 ? (
         <div className="text-center py-12">
           <BookOpen className="mx-auto h-12 w-12 text-gray-400" />
-          <h3 className="mt-2 text-sm font-medium text-gray-900">No courses enrolled</h3>
-          <p className="mt-1 text-sm text-gray-500">You haven't been enrolled in any courses yet.</p>
+          <h3 className="mt-2 text-sm font-medium text-white">No courses enrolled</h3>
+          <p className="mt-1 text-sm text-gray-400">You haven't been enrolled in any courses yet.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -74,13 +74,13 @@ const StudentCourses: React.FC = () => {
               <div key={course.id} className="card hover:shadow-md transition-shadow">
                 <div className="p-6">
                   <div className="mb-4">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                    <h3 className="text-lg font-semibold text-white mb-2">
                       {course.title}
                     </h3>
-                    <p className="text-sm text-gray-600 mb-3">
+                    <p className="text-sm text-gray-300 mb-3">
                       {course.description || 'No description provided'}
                     </p>
-                    <div className="flex items-center gap-4 text-sm text-gray-500">
+                    <div className="flex items-center gap-4 text-sm text-gray-400">
                       <div className="flex items-center gap-1">
                         <BookOpen className="h-4 w-4" />
                         {course.subject}
@@ -94,39 +94,39 @@ const StudentCourses: React.FC = () => {
 
                   {/* Course Stats */}
                   <div className="grid grid-cols-2 gap-4 mb-4">
-                    <div className="text-center p-3 bg-blue-50 rounded-lg">
-                      <div className="text-2xl font-bold text-blue-600">
+                    <div className="text-center p-3 bg-dark-800 rounded-lg">
+                      <div className="text-2xl font-bold text-blue-400">
                         {activeTests.length}
                       </div>
-                      <div className="text-xs text-blue-600">Active Tests</div>
+                      <div className="text-xs text-blue-400">Active Tests</div>
                     </div>
-                    <div className="text-center p-3 bg-green-50 rounded-lg">
-                      <div className="text-2xl font-bold text-green-600">
+                    <div className="text-center p-3 bg-dark-800 rounded-lg">
+                      <div className="text-2xl font-bold text-green-400">
                         {courseTests.length}
                       </div>
-                      <div className="text-xs text-green-600">Total Tests</div>
+                      <div className="text-xs text-green-400">Total Tests</div>
                     </div>
                   </div>
 
                   {/* Available Tests */}
                   {activeTests.length > 0 && (
                     <div className="mb-4">
-                      <h4 className="text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
+                      <h4 className="text-sm font-medium text-gray-300 mb-2 flex items-center gap-2">
                         <FileText className="h-4 w-4" />
                         Available Tests
                       </h4>
                       <div className="space-y-2">
                         {activeTests.slice(0, 3).map((test) => (
-                          <div key={test.id} className="flex items-center justify-between text-sm p-2 bg-gray-50 rounded">
-                            <span className="text-gray-700">{test.title}</span>
-                            <div className="flex items-center gap-1 text-gray-500">
+                          <div key={test.id} className="flex items-center justify-between text-sm p-2 bg-dark-800 rounded">
+                            <span className="text-white">{test.title}</span>
+                            <div className="flex items-center gap-1 text-gray-400">
                               <Clock className="h-3 w-3" />
                               {test.duration_minutes}m
                             </div>
                           </div>
                         ))}
                         {activeTests.length > 3 && (
-                          <div className="text-xs text-gray-500 text-center">
+                          <div className="text-xs text-gray-400 text-center">
                             +{activeTests.length - 3} more tests
                           </div>
                         )}
@@ -156,26 +156,26 @@ const StudentCourses: React.FC = () => {
       {courses.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           <div className="card text-center">
-            <div className="text-3xl font-bold text-blue-600">{courses.length}</div>
-            <div className="text-sm text-gray-600">Enrolled Courses</div>
+            <div className="text-3xl font-bold text-blue-400">{courses.length}</div>
+            <div className="text-sm text-gray-300">Enrolled Courses</div>
           </div>
           <div className="card text-center">
-            <div className="text-3xl font-bold text-green-600">
+            <div className="text-3xl font-bold text-green-400">
               {tests.filter(test => test.is_active && courses.some(course => course.id === test.course_id)).length}
             </div>
-            <div className="text-sm text-gray-600">Available Tests</div>
+            <div className="text-sm text-gray-300">Available Tests</div>
           </div>
           <div className="card text-center">
-            <div className="text-3xl font-bold text-purple-600">
+            <div className="text-3xl font-bold text-purple-400">
               {courses.reduce((acc, course) => acc + course.student_ids.length, 0)}
             </div>
-            <div className="text-sm text-gray-600">Total Students</div>
+            <div className="text-sm text-gray-300">Total Students</div>
           </div>
           <div className="card text-center">
-            <div className="text-3xl font-bold text-orange-600">
+            <div className="text-3xl font-bold text-orange-400">
               {courses.length > 0 ? Math.round(courses.reduce((acc, course) => acc + course.student_ids.length, 0) / courses.length) : 0}
             </div>
-            <div className="text-sm text-gray-600">Avg. Class Size</div>
+            <div className="text-sm text-gray-300">Avg. Class Size</div>
           </div>
         </div>
       )}

@@ -19,6 +19,8 @@ const CourseManagement: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showEnrollModal, setShowEnrollModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [courseToDelete, setCourseToDelete] = useState<string | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
   const [enrollStudentId, setEnrollStudentId] = useState('');
   const [formData, setFormData] = useState<CourseCreate>({
@@ -86,13 +88,18 @@ const CourseManagement: React.FC = () => {
   };
 
   const handleDeleteCourse = async (courseId: string) => {
-    if (!window.confirm('Are you sure you want to delete this course? This action cannot be undone.')) {
-      return;
-    }
+    setCourseToDelete(courseId);
+    setShowDeleteModal(true);
+  };
+
+  const confirmDeleteCourse = async () => {
+    if (!courseToDelete) return;
 
     try {
-      await coursesAPI.deleteCourse(courseId);
+      await coursesAPI.deleteCourse(courseToDelete);
       toast.success('Course deleted successfully');
+      setShowDeleteModal(false);
+      setCourseToDelete(null);
       fetchCourses();
     } catch (error) {
       console.error('Failed to delete course:', error);
@@ -190,8 +197,8 @@ const CourseManagement: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {courses.map((course) => (
-            <div key={course.id} className="card hover:shadow-md transition-shadow">
-              <div className="overflow-hidden">
+            <div key={course.id} className="card hover:shadow-md transition-shadow flex flex-col">
+              <div className="overflow-hidden flex-1">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-white mb-2">
@@ -220,39 +227,6 @@ const CourseManagement: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-3 gap-2">
-                  <button
-                    onClick={() => openEditModal(course)}
-                    className="btn-secondary w-full flex items-center justify-center px-3 py-3 text-sm group relative"
-                    title="Edit Course"
-                  >
-                    <Edit className="h-4 w-4" />
-                    <span className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-dark-800 text-white px-2 py-1 rounded text-xs whitespace-nowrap -top-8 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none">
-                      Edit
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => openEnrollModal(course)}
-                    className="btn-secondary w-full flex items-center justify-center px-3 py-3 text-sm group relative"
-                    title="Enroll Student"
-                  >
-                    <UserPlus className="h-4 w-4" />
-                    <span className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-dark-800 text-white px-2 py-1 rounded text-xs whitespace-nowrap -top-8 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none">
-                      Enroll
-                    </span>
-                  </button>
-                  <button
-                    onClick={() => handleDeleteCourse(course.id)}
-                    className="btn-danger w-full flex items-center justify-center px-3 py-3 text-sm group relative"
-                    title="Delete Course"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                    <span className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-dark-800 text-white px-2 py-1 rounded text-xs whitespace-nowrap -top-8 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none">
-                      Delete
-                    </span>
-                  </button>
-                </div>
-
                 {/* Student List */}
                 {course.student_ids.length > 0 && (
                   <div className="mt-4 pt-4 border-t border-gray-700">
@@ -273,6 +247,40 @@ const CourseManagement: React.FC = () => {
                     </div>
                   </div>
                 )}
+              </div>
+
+              {/* Buttons - Always at bottom */}
+              <div className="grid grid-cols-3 gap-2 mt-4">
+                <button
+                  onClick={() => openEditModal(course)}
+                  className="btn-secondary w-full flex items-center justify-center px-3 py-3 text-sm group relative"
+                  title="Edit Course"
+                >
+                  <Edit className="h-4 w-4" />
+                  <span className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-dark-800 text-white px-2 py-1 rounded text-xs whitespace-nowrap -top-8 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none">
+                    Edit
+                  </span>
+                </button>
+                <button
+                  onClick={() => openEnrollModal(course)}
+                  className="btn-secondary w-full flex items-center justify-center px-3 py-3 text-sm group relative"
+                  title="Enroll Student"
+                >
+                  <UserPlus className="h-4 w-4" />
+                  <span className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-dark-800 text-white px-2 py-1 rounded text-xs whitespace-nowrap -top-8 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none">
+                    Enroll
+                  </span>
+                </button>
+                <button
+                  onClick={() => handleDeleteCourse(course.id)}
+                  className="btn-danger w-full flex items-center justify-center px-3 py-3 text-sm group relative"
+                  title="Delete Course"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  <span className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-dark-800 text-white px-2 py-1 rounded text-xs whitespace-nowrap -top-8 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none">
+                    Delete
+                  </span>
+                </button>
               </div>
             </div>
           ))}
@@ -469,6 +477,35 @@ const CourseManagement: React.FC = () => {
                 className="btn-primary flex-1 disabled:opacity-50"
               >
                 Enroll Student
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-dark-900 rounded-lg p-6 w-full max-w-md mx-4 border border-dark-700">
+            <h2 className="text-xl font-semibold mb-4 text-white">Delete Course</h2>
+            <p className="text-gray-300 mb-6">
+              Are you sure you want to delete this course? This action cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setCourseToDelete(null);
+                }}
+                className="btn-secondary flex-1"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDeleteCourse}
+                className="btn-danger flex-1"
+              >
+                Delete Course
               </button>
             </div>
           </div>
