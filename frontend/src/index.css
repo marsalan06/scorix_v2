@@ -42,7 +42,7 @@
   }
   
   .card {
-    @apply bg-dark-900 rounded-lg shadow-xl border border-dark-800 p-8;
+    @apply bg-dark-900 rounded-lg shadow-xl border border-dark-800 p-6 overflow-hidden;
   }
   
   .sidebar-item {

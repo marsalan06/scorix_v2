@@ -191,7 +191,7 @@ const CourseManagement: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {courses.map((course) => (
             <div key={course.id} className="card hover:shadow-md transition-shadow">
-              <div className="p-6">
+              <div className="overflow-hidden">
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-white mb-2">
@@ -220,26 +220,36 @@ const CourseManagement: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   <button
                     onClick={() => openEditModal(course)}
-                    className="btn-secondary flex-1 flex items-center justify-center gap-2"
+                    className="btn-secondary w-full flex items-center justify-center px-3 py-3 text-sm group relative"
+                    title="Edit Course"
                   >
                     <Edit className="h-4 w-4" />
-                    Edit
+                    <span className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-dark-800 text-white px-2 py-1 rounded text-xs whitespace-nowrap -top-8 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none">
+                      Edit
+                    </span>
                   </button>
                   <button
                     onClick={() => openEnrollModal(course)}
-                    className="btn-secondary flex-1 flex items-center justify-center gap-2"
+                    className="btn-secondary w-full flex items-center justify-center px-3 py-3 text-sm group relative"
+                    title="Enroll Student"
                   >
                     <UserPlus className="h-4 w-4" />
-                    Enroll
+                    <span className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-dark-800 text-white px-2 py-1 rounded text-xs whitespace-nowrap -top-8 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none">
+                      Enroll
+                    </span>
                   </button>
                   <button
                     onClick={() => handleDeleteCourse(course.id)}
-                    className="btn-danger flex items-center justify-center gap-2"
+                    className="btn-danger w-full flex items-center justify-center px-3 py-3 text-sm group relative"
+                    title="Delete Course"
                   >
                     <Trash2 className="h-4 w-4" />
+                    <span className="absolute opacity-0 group-hover:opacity-100 transition-opacity duration-200 bg-dark-800 text-white px-2 py-1 rounded text-xs whitespace-nowrap -top-8 left-1/2 transform -translate-x-1/2 z-50 pointer-events-none">
+                      Delete
+                    </span>
                   </button>
                 </div>
 
