@@ -26,6 +26,18 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Log detailed error information for debugging
+    if (error.response) {
+      console.error('API Error:', {
+        status: error.response.status,
+        statusText: error.response.statusText,
+        url: error.config?.url,
+        method: error.config?.method,
+        data: error.response.data,
+        headers: error.response.headers
+      });
+    }
+    
     // Only handle 401 errors for authenticated requests (not for login attempts)
     if (error.response?.status === 401 && error.config?.url !== '/auth/login') {
       localStorage.removeItem('token');
@@ -52,7 +64,7 @@ export const coursesAPI = {
   updateCourse: (id: string, courseData: any) => api.put(`/courses/${id}`, courseData),
   deleteCourse: (id: string) => api.delete(`/courses/${id}`),
   enrollStudent: (courseId: string, studentId: string) =>
-    api.post(`/courses/${courseId}/enroll`, { student_id: studentId }),
+    api.post(`/courses/${courseId}/enroll`, { course_id: courseId, student_id: studentId }),
   unenrollStudent: (courseId: string, studentId: string) =>
     api.delete(`/courses/${courseId}/unenroll/${studentId}`),
 };

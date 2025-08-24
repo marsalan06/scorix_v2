@@ -97,5 +97,28 @@
     @apply text-blue-500;
   }
   
+  /* Custom Scrollbar Styles */
+  .scrollable-content {
+    scrollbar-width: thin;
+    scrollbar-color: #4B5563 #1F2937;
+  }
+  
+  .scrollable-content::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .scrollable-content::-webkit-scrollbar-track {
+    background: #1F2937;
+    border-radius: 4px;
+  }
+  
+  .scrollable-content::-webkit-scrollbar-thumb {
+    background: #4B5563;
+    border-radius: 4px;
+  }
+  
+  .scrollable-content::-webkit-scrollbar-thumb:hover {
+    background: #6B7280;
+  }
 
 }
