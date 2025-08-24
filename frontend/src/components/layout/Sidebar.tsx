@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import React from 'react';
+import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
   Home, 
@@ -21,7 +21,6 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
   const { user, logout } = useAuth();
-  const location = useLocation();
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home, end: true },

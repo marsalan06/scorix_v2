@@ -10,8 +10,7 @@ import {
   Star,
   Tag,
   X,
-  ChevronUp,
-  ChevronDown
+  Copy
 } from 'lucide-react';
 import { questionsAPI, coursesAPI } from '../../services/api';
 import { Question, QuestionCreate, QuestionUpdate, Course } from '../../types';
@@ -30,7 +29,8 @@ const QuestionManagement: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<number>(1);
   const [isUpdatingCount, setIsUpdatingCount] = useState(false);
   const [questionCreated, setQuestionCreated] = useState(false);
-  const [expandedQuestions, setExpandedQuestions] = useState<Set<string>>(new Set());
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewingQuestion, setViewingQuestion] = useState<Question | null>(null);
   const [formData, setFormData] = useState<QuestionCreate>({
     question: '',
     sample_answer: '',
@@ -48,7 +48,13 @@ const QuestionManagement: React.FC = () => {
         coursesAPI.getTeacherCourses(),
       ]);
       
-      setQuestions(questionsRes.data);
+      // Normalize questions with stable UI keys
+      const rawQs = questionsRes.data ?? [];
+      const normalizedQs = rawQs.map((q: any, i: number) => ({
+        ...q,
+        _uiKey: buildUiKey(q, i),
+      }));
+      setQuestions(normalizedQs);
       setCourses(coursesRes.data);
     } catch (error) {
       console.error('Failed to fetch data:', error);
@@ -68,12 +74,11 @@ const QuestionManagement: React.FC = () => {
   // Debug: Log when course preview should update
   useEffect(() => {
     if (formData.course_id) {
-      const course = courses.find(c => c.id === formData.course_id);
+      // const course = courses.find(c => c.id === formData.course_id);
       // Calculate count inline to avoid dependency issues
-      const calculatedCount = course?.question_count !== undefined 
-        ? course.question_count 
-        : questions.filter(q => q.course_id === formData.course_id).length;
-      console.log('Course preview debug - course_id:', formData.course_id, 'course:', course, 'backend_question_count:', course?.question_count, 'calculated_count:', calculatedCount);
+      // const calculatedCount = course?.question_count !== undefined 
+      //   ? course.question_count 
+      //   : questions.filter(q => q.course_id === formData.course_id).length;
     }
   }, [formData.course_id, courses, questions]);
 
@@ -84,13 +89,10 @@ const QuestionManagement: React.FC = () => {
   const handleCreateQuestion = async () => {
     try {
       setIsUpdatingCount(true);
-      console.log('Creating question for course:', formData.course_id);
-      console.log('Current courses state:', courses);
       
       await questionsAPI.createQuestion(formData);
       
       // Add the new question to local state immediately for instant feedback
-      console.log('Adding new question locally for course:', formData.course_id);
       
       // Also add the new question to the local questions state for immediate feedback
       const newQuestion: Partial<Question> = {
@@ -104,6 +106,9 @@ const QuestionManagement: React.FC = () => {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };
+      
+      // Give the new question a UI key
+      (newQuestion as any)._uiKey = buildUiKey(newQuestion, questions.length);
       
       setQuestions(prevQuestions => [newQuestion as Question, ...prevQuestions]);
       
@@ -141,11 +146,22 @@ const QuestionManagement: React.FC = () => {
       };
       
       await questionsAPI.updateQuestion(selectedQuestion.id, updateData);
+      
+      // Update local state instead of refetching to preserve expansion state
+      setQuestions(prevQuestions => 
+        prevQuestions.map(q => 
+          q.id === selectedQuestion.id 
+            ? { ...q, ...updateData, updated_at: new Date().toISOString() }
+            : q
+        )
+      );
+      
+
+      
       toast.success('Question updated successfully');
       setShowEditModal(false);
       setSelectedQuestion(null);
       resetForm();
-      fetchData();
     } catch (error) {
       console.error('Failed to update question:', error);
       toast.error('Failed to update question');
@@ -169,11 +185,11 @@ const QuestionManagement: React.FC = () => {
         setQuestions(prevQuestions => 
           prevQuestions.filter(q => q.id !== questionId)
         );
-        console.log('Removed question from local state:', questionId);
       }
       
+
+      
       toast.success('Question deleted successfully');
-      fetchData();
     } catch (error) {
       console.error('Failed to delete question:', error);
       toast.error('Failed to delete question');
@@ -274,26 +290,51 @@ const QuestionManagement: React.FC = () => {
     return questions.filter(q => q.course_id === courseId).length;
   };
 
-  // Helper functions for expandable questions
-  const toggleQuestionExpansion = (questionId: string) => {
-    setExpandedQuestions(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(questionId)) {
-        newSet.delete(questionId);
-      } else {
-        newSet.add(questionId);
-      }
-      return newSet;
-    });
+  // Helper function to build stable UI keys that can't collide
+  const buildUiKey = (q: any, i: number) => {
+    // be defensive about shapes: id/_id, course_id/course?.id
+    const id = q.id ?? q._id ?? `noid`;
+    const courseId =
+      q.course_id ??
+      (typeof q.course === 'object' ? q.course?.id : q.course) ??
+      `nocourse`;
+    return `${String(courseId)}::${String(id)}::${i}`; // index keeps keys unique even if above collide
   };
 
-  const isQuestionExpanded = (questionId: string) => expandedQuestions.has(questionId);
+  // Helper function to get UI key
+  const getUiKey = (q: any) => (q as any)._uiKey as string;
+  
+  // Helper function to open view modal
+  const openViewModal = (question: Question) => {
+    setViewingQuestion(question);
+    setShowViewModal(true);
+  };
+
+
 
   // Get course name by ID
   const getCourseName = (courseId: string) => {
     const course = courses.find(c => c.id === courseId);
     return course ? course.title : 'Unknown Course';
   };
+
+
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === '/' && !e.ctrlKey && !e.metaKey) {
+        e.preventDefault();
+        const searchInput = document.querySelector('input[placeholder*="Search questions"]') as HTMLInputElement;
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // Get difficulty color and icon
   const getDifficultyInfo = (level: string) => {
@@ -318,46 +359,45 @@ const QuestionManagement: React.FC = () => {
   }
 
   return (
-    <div className="space-y-8">
-      {/* Enhanced Header */}
-      <div className="bg-gradient-to-r from-dark-800 to-dark-900 rounded-xl p-8 border border-dark-700">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
-          <div>
-            <h1 className="text-3xl font-bold text-white mb-2">Question Management</h1>
-            <p className="text-gray-300 text-lg">Create and manage questions for your courses with AI-powered grading</p>
-            <div className="flex items-center gap-4 mt-4 text-sm text-gray-400">
-              <div className="flex items-center gap-2">
-                <BookOpen className="h-4 w-4" />
-                {courses.length} courses available
-              </div>
-              <div className="flex items-center gap-2">
-                <HelpCircle className="h-4 w-4" />
-                {questions.length} questions created
+    <div className="space-y-4">
+      {/* Slim Toolbar Header */}
+      <div className="bg-dark-900 rounded-xl border border-dark-800 shadow-lg">
+        <div className="p-4">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div className="flex items-center gap-6">
+              <h1 className="text-2xl font-bold text-white">Question Management</h1>
+              <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-2 text-gray-400">
+                  <BookOpen className="h-4 w-4" />
+                  {courses.length} courses
+                </div>
+                <div className="flex items-center gap-2 text-gray-400">
+                  <HelpCircle className="h-4 w-4" />
+                  {questions.length} questions
+                </div>
               </div>
             </div>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="btn-primary px-6 py-2 text-sm font-semibold flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" />
+              Create Question
+            </button>
           </div>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="btn-primary px-8 py-4 text-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 flex items-center gap-3"
-          >
-            <Plus className="h-6 w-6" />
-            Create Question
-          </button>
         </div>
       </div>
 
-      {/* Enhanced Filters */}
-      <div className="bg-dark-900 rounded-xl p-6 border border-dark-800 shadow-lg">
-        <div className="flex flex-col lg:flex-row gap-6">
+      {/* Compact Filters */}
+      <div className="bg-dark-900 rounded-xl p-4 border border-dark-800 shadow-lg">
+        <div className="flex flex-col lg:flex-row gap-4 items-end">
           {/* Course Filter */}
           <div className="flex-1">
-            <label className="block text-sm font-semibold text-gray-200 mb-3">
-              Filter by Course
-            </label>
+            <label className="block text-xs font-medium text-gray-400 mb-2">Course</label>
             <select
               value={selectedCourseId}
               onChange={(e) => setSelectedCourseId(e.target.value)}
-              className="input-field w-full bg-dark-800 border-dark-700 focus:border-primary-500"
+              className="input-field w-full bg-dark-800 border-dark-700 focus:border-primary-500 text-sm py-2"
             >
               <option value="all">All Courses</option>
               {courses.map((course) => (
@@ -370,37 +410,37 @@ const QuestionManagement: React.FC = () => {
 
           {/* Search */}
           <div className="flex-1">
-            <label className="block text-sm font-semibold text-gray-200 mb-3">
-              Search Questions
-            </label>
+            <label className="block text-xs font-medium text-gray-400 mb-2">Search</label>
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search questions or answers..."
+                placeholder="Search questions... (Press / to focus)"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="input-field w-full pl-12 bg-dark-800 border-dark-700 focus:border-primary-500"
+                className="input-field w-full pl-10 bg-dark-800 border-dark-700 focus:border-primary-500 text-sm py-2"
               />
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-xs text-gray-500 bg-dark-700 px-2 py-1 rounded">
+                /
+              </div>
             </div>
           </div>
 
           {/* Results Count */}
-          <div className="flex items-end">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-white">{filteredQuestions.length}</div>
-              <div className="text-sm text-gray-400">Questions</div>
-            </div>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-gray-400">Showing</span>
+            <span className="font-bold text-white">{filteredQuestions.length}</span>
+            <span className="text-sm text-gray-400">questions</span>
           </div>
         </div>
       </div>
 
-      {/* Enhanced Questions Grid */}
+      {/* Compact Question Tiles */}
       {filteredQuestions.length === 0 ? (
-        <div className="text-center py-16 bg-dark-900 rounded-xl border border-dark-800">
-          <HelpCircle className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-          <h3 className="text-xl font-semibold text-white mb-2">No questions found</h3>
-          <p className="text-gray-400 mb-6 max-w-md mx-auto">
+        <div className="text-center py-12 bg-dark-900 rounded-xl border border-dark-800">
+          <HelpCircle className="mx-auto h-12 w-12 text-gray-400 mb-3" />
+          <h3 className="text-lg font-semibold text-white mb-2">No questions found</h3>
+          <p className="text-gray-400 mb-4 max-w-md mx-auto">
             {selectedCourseId === 'all' 
               ? 'Create your first question to get started with AI-powered grading.'
               : 'No questions found for this course. Start building your question bank!'
@@ -408,117 +448,103 @@ const QuestionManagement: React.FC = () => {
           </p>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="btn-primary px-6 py-3 text-lg"
+            className="btn-primary px-4 py-2 text-sm"
           >
             Create Your First Question
           </button>
         </div>
       ) : (
-                    <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-              {filteredQuestions.map((question) => (
-                <div key={question.id} className="bg-dark-900 rounded-xl border border-dark-800 hover:border-dark-700 transition-all duration-200 hover:shadow-xl overflow-hidden">
-                  {/* Question Header - Always Visible */}
-                  <div className="p-4 border-b border-dark-800">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-600 text-white">
-                            {getCourseName(question.course_id)}
-                          </span>
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getDifficultyInfo(question.difficulty_level).color}`}>
-                            {getDifficultyInfo(question.difficulty_level).icon} {question.difficulty_level}
-                          </span>
-                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-600 text-white">
-                            {question.points} pts
-                          </span>
-                        </div>
-                        <h3 className="text-lg font-semibold text-white leading-relaxed line-clamp-2 mb-3">
-                          {question.question}
-                        </h3>
-                        
-                        {/* Quick Actions Row */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => toggleQuestionExpansion(question.id)}
-                              className="text-xs text-gray-400 hover:text-primary-400 px-2 py-1 rounded hover:bg-dark-800 transition-colors flex items-center gap-1"
-                            >
-                              {isQuestionExpanded(question.id) ? (
-                                <>
-                                  <ChevronUp className="h-3 w-3" />
-                                  Collapse
-                                </>
-                              ) : (
-                                <>
-                                  <ChevronDown className="h-3 w-3" />
-                                  Expand
-                                </>
-                              )}
-                            </button>
-                            <button
-                              onClick={() => openEditModal(question)}
-                              className="text-xs text-gray-400 hover:text-primary-400 px-2 py-1 rounded hover:bg-dark-800 transition-colors flex items-center gap-1"
-                            >
-                              <Edit className="h-3 w-3" />
-                              Edit
-                            </button>
-                          </div>
-                          <button
-                            onClick={() => handleDeleteQuestion(question.id)}
-                            className="text-xs text-red-400 hover:text-red-300 px-2 py-1 rounded hover:bg-red-500/10 transition-colors flex items-center gap-1"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                            Delete
-                          </button>
-                        </div>
-                      </div>
-                    </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredQuestions.map((question) => {
+            const key = getUiKey(question);
+            
+            return (
+              <div 
+                key={key}
+                className="bg-dark-900 rounded-lg border border-dark-800 transition-all duration-200 hover:shadow-lg hover:border-primary-500/50 group"
+              >
+                {/* Compact Question Tile */}
+                <div className="p-3">
+                {/* Metadata Row */}
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-600 text-white">
+                    {getCourseName(question.course_id)}
+                  </span>
+                  <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium border ${getDifficultyInfo(question.difficulty_level).color}`}>
+                    {getDifficultyInfo(question.difficulty_level).icon}
+                  </span>
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-600 text-white">
+                    {question.points}
+                  </span>
+                </div>
+                
+                {/* Question Title - Clamped */}
+                <h3 className="text-sm font-medium text-white leading-tight line-clamp-2 mb-3 group-hover:text-primary-300 transition-colors">
+                  {question.question}
+                </h3>
+                
+                {/* Quick Actions - Always visible */}
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-dark-800">
+                  <div className="flex gap-1">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openViewModal(question);
+                      }}
+                      className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded transition-colors relative group/btn"
+                      title="View Question"
+                    >
+                      <Eye className="h-3.5 w-3.5" />
+                      <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover/btn:opacity-100 transition-opacity whitespace-nowrap z-10">
+                        View
+                      </span>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        openEditModal(question);
+                      }}
+                      className="p-1.5 text-gray-400 hover:text-primary-400 hover:bg-primary-500/10 rounded transition-colors relative group/btn"
+                      title="Edit Question"
+                    >
+                      <Edit className="h-3.5 w-3.5" />
+                      <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover/btn:opacity-100 transition-opacity whitespace-nowrap z-10">
+                        Edit
+                      </span>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        navigator.clipboard.writeText(question.question);
+                        toast.success('Question copied to clipboard');
+                      }}
+                      className="p-1.5 text-gray-400 hover:text-green-400 hover:bg-green-500/10 rounded transition-colors relative group/btn"
+                      title="Copy Question"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                      <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover/btn:opacity-100 transition-opacity whitespace-nowrap z-10">
+                        Copy
+                      </span>
+                    </button>
                   </div>
-
-                                                  {/* Expandable Content */}
-                  <div className={`border-t border-dark-800 overflow-hidden transition-all duration-300 ease-in-out ${
-                    isQuestionExpanded(question.id) ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-                  }`}>
-                    <div className="p-4 space-y-4">
-                      <div>
-                        <h4 className="text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
-                          <Eye className="h-4 w-4" />
-                          Sample Answer
-                        </h4>
-                        <div className="max-h-32 overflow-y-auto bg-dark-800 p-3 rounded-lg border border-dark-700 hover:border-dark-600 transition-colors duration-200 scrollable-content">
-                          <p className="text-gray-300 text-sm leading-relaxed pr-2">
-                            {question.sample_answer}
-                          </p>
-                          {question.sample_answer.length > 200 && (
-                            <div className="text-xs text-gray-500 mt-2 text-center italic">
-                              ↕️ Scroll to see more
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      
-                      <div>
-                        <h4 className="text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
-                          <Tag className="h-4 w-4" />
-                          Marking Scheme ({question.marking_scheme.length} rules)
-                        </h4>
-                        <div className="max-h-32 overflow-y-auto space-y-2 border border-dark-700 rounded-lg p-2 hover:border-dark-600 transition-colors duration-200 scrollable-content">
-                          {question.marking_scheme.map((item, index) => (
-                            <div key={index} className="text-sm text-gray-400 bg-dark-800 p-2 rounded border-l-2 border-primary-500">
-                            • {item}
-                            </div>
-                          ))}
-                          {question.marking_scheme.length > 3 && (
-                            <div className="text-xs text-gray-500 text-center italic py-1">
-                              ↕️ Scroll to see all rules
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDeleteQuestion(question.id);
+                    }}
+                    className="p-1.5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded transition-colors relative group/btn"
+                    title="Delete Question"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                    <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 text-xs text-white bg-gray-800 rounded opacity-0 group-hover/btn:opacity-100 transition-opacity whitespace-nowrap z-10">
+                      Delete
+                    </span>
+                  </button>
+                </div>
+              </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -1248,6 +1274,120 @@ const QuestionManagement: React.FC = () => {
                   className="btn-primary flex-1 py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Update Question
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Question Modal */}
+      {showViewModal && viewingQuestion && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-dark-900 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto border border-dark-700 shadow-2xl">
+            <div className="sticky top-0 bg-dark-900 border-b border-dark-800 p-6 rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-white">Question Details</h2>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => {
+                      setShowViewModal(false);
+                      setViewingQuestion(null);
+                    }}
+                    className="text-gray-400 hover:text-white p-2 hover:bg-dark-800 rounded-lg transition-colors"
+                  >
+                    <X className="h-6 w-6" />
+                  </button>
+                </div>
+              </div>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              {/* Course Info */}
+              <div className="bg-dark-800 rounded-xl p-4 border border-dark-700">
+                <div className="flex items-center gap-3 mb-3">
+                  <BookOpen className="h-6 w-6 text-primary-500" />
+                  <div>
+                    <h4 className="text-sm font-semibold text-gray-200">Course</h4>
+                    <p className="text-xs text-gray-500">Question belongs to this course</p>
+                  </div>
+                </div>
+                <div className="text-white font-medium">
+                  {getCourseName(viewingQuestion.course_id)}
+                </div>
+              </div>
+
+              {/* Question */}
+              <div className="bg-dark-800 rounded-xl p-4 border border-dark-700">
+                <h4 className="text-sm font-semibold text-gray-200 mb-3">Question</h4>
+                <div className="text-white text-lg leading-relaxed">
+                  {viewingQuestion.question}
+                </div>
+              </div>
+
+              {/* Sample Answer */}
+              <div className="bg-dark-800 rounded-xl p-4 border border-dark-700">
+                <h4 className="text-sm font-semibold text-gray-200 mb-3">Sample Answer</h4>
+                <div className="text-gray-300 text-base leading-relaxed">
+                  {viewingQuestion.sample_answer}
+                </div>
+              </div>
+
+              {/* Question Settings */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-dark-800 rounded-xl p-4 border border-dark-700">
+                  <h4 className="text-sm font-semibold text-gray-200 mb-2">Difficulty</h4>
+                  <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${getDifficultyInfo(viewingQuestion.difficulty_level).color}`}>
+                    {getDifficultyInfo(viewingQuestion.difficulty_level).icon} {viewingQuestion.difficulty_level}
+                  </div>
+                </div>
+                <div className="bg-dark-800 rounded-xl p-4 border border-dark-700">
+                  <h4 className="text-sm font-semibold text-gray-200 mb-2">Points</h4>
+                  <div className="text-white text-lg font-semibold">
+                    {viewingQuestion.points}
+                  </div>
+                </div>
+                <div className="bg-dark-800 rounded-xl p-4 border border-dark-700">
+                  <h4 className="text-sm font-semibold text-gray-200 mb-2">Created</h4>
+                  <div className="text-gray-300 text-sm">
+                    {new Date(viewingQuestion.created_at).toLocaleDateString()}
+                  </div>
+                </div>
+              </div>
+
+              {/* Marking Scheme */}
+              <div className="bg-dark-800 rounded-xl p-4 border border-dark-700">
+                <h4 className="text-sm font-semibold text-gray-200 mb-3">Marking Scheme ({viewingQuestion.marking_scheme.length} rules)</h4>
+                <div className="space-y-2">
+                  {viewingQuestion.marking_scheme.map((item, index) => (
+                    <div key={index} className="text-gray-300 text-sm bg-dark-700 p-3 rounded border-l-2 border-primary-500">
+                      • {item}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+            
+            <div className="sticky bottom-0 bg-dark-900 border-t border-dark-800 p-6 rounded-b-2xl">
+              <div className="flex gap-4">
+                <button
+                  onClick={() => {
+                    setShowViewModal(false);
+                    setViewingQuestion(null);
+                  }}
+                  className="btn-secondary flex-1 py-3 text-lg"
+                >
+                  Close
+                </button>
+                <button
+                  onClick={() => {
+                    setShowViewModal(false);
+                    setViewingQuestion(null);
+                    openEditModal(viewingQuestion);
+                  }}
+                  className="btn-primary flex-1 py-3 text-lg"
+                >
+                  Edit Question
                 </button>
               </div>
             </div>
