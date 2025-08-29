@@ -1072,7 +1072,7 @@ async def grade_test(
 # ==================== GRADE SETTINGS ENDPOINTS ====================
 
 @app.get("/grade-thresholds", response_model=GradeThresholds, tags=["Grade Settings"])
-async def get_grade_thresholds(current_user: dict = Depends(get_current_teacher)):
+async def get_grade_thresholds_endpoint(current_user: dict = Depends(get_current_teacher)):
     """Get current grade thresholds for the authenticated teacher"""
     thresholds = await get_grade_thresholds(current_user["id"])
     return GradeThresholds(**thresholds)
