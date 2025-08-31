@@ -6,10 +6,12 @@ import {
   Zap,
   Target,
   BarChart3,
-  X
+  X,
+  Users,
+  Eye
 } from 'lucide-react';
-import { gradingAPI, coursesAPI, testsAPI } from '../../services/api';
-import { Course, Test, GradingResult, TestGradingResult, GradeThresholds } from '../../types';
+import { gradingAPI, coursesAPI, testsAPI, studentAnswersAPI } from '../../services/api';
+import { Course, Test, GradingResult, TestGradingResult, GradeThresholds, StudentAnswer, TestAnswer } from '../../types';
 import toast from 'react-hot-toast';
 
 const GradingInterface: React.FC = () => {
@@ -31,6 +33,14 @@ const GradingInterface: React.FC = () => {
     D: 60,
     F: 0
   });
+  
+  // Student Answers state
+  const [studentAnswers, setStudentAnswers] = useState<StudentAnswer[]>([]);
+  const [testAnswers, setTestAnswers] = useState<TestAnswer[]>([]);
+  const [showAnswersModal, setShowAnswersModal] = useState(false);
+  const [selectedAnswersCourseId, setSelectedAnswersCourseId] = useState<string>('');
+  const [selectedAnswersTestId, setSelectedAnswersTestId] = useState<string>('');
+  const [answersLoading, setAnswersLoading] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -120,6 +130,60 @@ const GradingInterface: React.FC = () => {
     } catch (error) {
       console.error('Failed to update grade thresholds:', error);
       toast.error('Failed to update grade thresholds');
+    }
+  };
+
+  const handleViewCourseAnswers = async () => {
+    if (!selectedAnswersCourseId) {
+      toast.error('Please select a course to view answers');
+      return;
+    }
+
+    try {
+      setAnswersLoading(true);
+      const response = await studentAnswersAPI.getCourseAnswers(selectedAnswersCourseId);
+      setStudentAnswers(response.data ?? []);
+      setTestAnswers([]);
+      setShowAnswersModal(true);
+      
+      if (response.data && response.data.length > 0) {
+        toast.success(`Found ${response.data.length} student answers`);
+      } else {
+        toast.success('No student answers found for this course');
+      }
+    } catch (error) {
+      console.error('Failed to fetch course answers:', error);
+      toast.error('Failed to fetch student answers');
+    } finally {
+      setAnswersLoading(false);
+    }
+  };
+
+  const handleViewTestAnswers = async () => {
+    if (!selectedAnswersTestId) {
+      toast.error('Please select a test to view answers');
+      return;
+    }
+
+    try {
+      setAnswersLoading(true);
+      // Note: We'll need to implement this endpoint in the backend
+      // For now, we'll use a placeholder
+      const response = await studentAnswersAPI.getCourseAnswers(selectedAnswersCourseId);
+      setTestAnswers(response.data ?? []);
+      setStudentAnswers([]);
+      setShowAnswersModal(true);
+      
+      if (response.data && response.data.length > 0) {
+        toast.success(`Found ${response.data.length} test submissions`);
+      } else {
+        toast.success('No test submissions found for this test');
+      }
+    } catch (error) {
+      console.error('Failed to fetch test answers:', error);
+      toast.error('Failed to fetch test submissions');
+    } finally {
+      setAnswersLoading(false);
     }
   };
 
@@ -295,6 +359,106 @@ const GradingInterface: React.FC = () => {
               {selectedCourseForTest && tests.filter(test => test.course_id === selectedCourseForTest).length === 0 && (
                 <p className="text-xs text-gray-500">No tests available</p>
               )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Student Answers Viewer */}
+      <div className="bg-dark-900 rounded-xl border border-dark-800 shadow-lg">
+        <div className="p-4">
+          <div className="flex items-center gap-4 mb-4">
+            <h3 className="text-lg font-semibold text-white">Student Answers Viewer</h3>
+            <div className="flex items-center gap-2 text-sm text-gray-400">
+              <Users className="h-4 w-4" />
+              View submitted answers before grading
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Course Answers Viewer */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-blue-400" />
+                <span className="text-sm font-medium text-gray-300">Course Answers</span>
+              </div>
+              <div className="flex gap-2">
+                <select
+                  value={selectedAnswersCourseId}
+                  onChange={(e) => setSelectedAnswersCourseId(e.target.value)}
+                  className="input-field flex-1 bg-dark-800 border-dark-700 focus:border-primary-500 text-sm py-2"
+                >
+                  <option value="">Select course...</option>
+                  {courses.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {course.title}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  onClick={handleViewCourseAnswers}
+                  disabled={!selectedAnswersCourseId || answersLoading}
+                  className="btn-secondary px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {answersLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                  View
+                </button>
+              </div>
+            </div>
+
+            {/* Test Answers Viewer */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <FileText className="h-4 w-4 text-purple-400" />
+                <span className="text-sm font-medium text-gray-300">Test Submissions</span>
+              </div>
+              <div className="flex gap-2">
+                <select
+                  value={selectedAnswersCourseId}
+                  onChange={(e) => setSelectedAnswersCourseId(e.target.value)}
+                  className="input-field flex-1 bg-dark-800 border-dark-700 focus:border-primary-500 text-sm py-2"
+                >
+                  <option value="">Course...</option>
+                  {courses.map((course) => (
+                    <option key={course.id} value={course.id}>
+                      {course.title}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={selectedAnswersTestId}
+                  onChange={(e) => setSelectedAnswersTestId(e.target.value)}
+                  disabled={!selectedAnswersCourseId}
+                  className="input-field flex-1 bg-dark-800 border-dark-700 focus:border-primary-500 text-sm py-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <option value="">
+                    {selectedAnswersCourseId ? 'Test...' : 'Course first'}
+                  </option>
+                  {tests
+                    .filter(test => test.course_id === selectedAnswersCourseId)
+                    .map((test) => (
+                      <option key={test.id} value={test.id}>
+                        {test.title}
+                      </option>
+                    ))}
+                </select>
+                <button
+                  onClick={handleViewTestAnswers}
+                  disabled={!selectedAnswersTestId || answersLoading}
+                  className="btn-secondary px-4 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                >
+                  {answersLoading ? (
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                  View
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -512,6 +676,111 @@ const GradingInterface: React.FC = () => {
                   Update Thresholds
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Student Answers Modal */}
+      {showAnswersModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
+          <div className="bg-dark-900 rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-y-auto border border-dark-700 shadow-2xl">
+            <div className="sticky top-0 bg-dark-900 border-b border-dark-800 p-6 rounded-t-2xl">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold text-white">Student Answers</h2>
+                <button
+                  onClick={() => setShowAnswersModal(false)}
+                  className="text-gray-400 hover:text-white p-2 hover:bg-dark-800 rounded-lg transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6">
+              {/* Course Answers Display */}
+              {studentAnswers.length > 0 && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <BookOpen className="h-5 w-5 text-blue-400" />
+                    Course Answers ({studentAnswers.length})
+                  </h3>
+                  <div className="space-y-3">
+                    {studentAnswers.map((answer, index) => (
+                      <div key={index} className="bg-dark-800 rounded-lg p-4 border border-dark-700">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-white">{answer.student_name}</span>
+                              <span className="text-xs text-gray-400">({answer.student_roll_no})</span>
+                            </div>
+                            <span className="text-xs text-gray-500">•</span>
+                            <span className="text-sm text-gray-300">{getCourseName(answer.course_id)}</span>
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {new Date(answer.created_at).toLocaleDateString()}
+                          </div>
+                        </div>
+                        
+                        <div className="bg-dark-700 rounded p-3 mb-3">
+                          <div className="text-xs text-gray-400 mb-1">Student Answer:</div>
+                          <div className="text-sm text-white">{answer.answer}</div>
+                        </div>
+                        
+                        <div className="text-xs text-gray-400">
+                          Question ID: {answer.question_id}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Test Answers Display */}
+              {testAnswers.length > 0 && (
+                <div>
+                  <h3 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+                    <FileText className="h-5 w-5 text-purple-400" />
+                    Test Submissions ({testAnswers.length})
+                  </h3>
+                  <div className="space-y-3">
+                    {testAnswers.map((testAnswer, index) => (
+                      <div key={index} className="bg-dark-800 rounded-lg p-4 border border-dark-700">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-medium text-white">{testAnswer.student_name}</span>
+                              <span className="text-xs text-gray-400">({testAnswer.student_roll_no})</span>
+                            </div>
+                            <span className="text-xs text-gray-500">•</span>
+                            <span className="text-sm text-gray-300">{getTestName(testAnswer.test_id)}</span>
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {new Date(testAnswer.created_at).toLocaleDateString()}
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <div className="text-xs text-gray-400">Question Answers:</div>
+                          {Object.entries(testAnswer.question_answers).map(([questionId, answer], qIndex) => (
+                            <div key={qIndex} className="bg-dark-700 rounded p-2">
+                              <div className="text-xs text-gray-400 mb-1">Q{qIndex + 1} (ID: {questionId})</div>
+                              <div className="text-sm text-white">{answer}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {studentAnswers.length === 0 && testAnswers.length === 0 && (
+                <div className="text-center py-8">
+                  <div className="text-gray-400 mb-2">No answers found</div>
+                  <div className="text-sm text-gray-500">Select a course or test to view student submissions</div>
+                </div>
+              )}
             </div>
           </div>
         </div>
