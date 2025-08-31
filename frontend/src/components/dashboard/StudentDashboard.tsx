@@ -8,6 +8,7 @@ import {
 } from 'lucide-react';
 import { coursesAPI, testsAPI, studentAnswersAPI } from '../../services/api';
 import { Course, Test, StudentAnswer } from '../../types';
+import toast from 'react-hot-toast';
 
 const StudentDashboard: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -16,26 +17,42 @@ const StudentDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDashboardData();
-  }, []);
+    const fetchData = async () => {
+      try {
+        setLoading(true);
+        const [coursesRes, answersRes] = await Promise.all([
+          coursesAPI.getStudentCourses(),
+          studentAnswersAPI.getStudentAnswers(),
+        ]);
+        
+        setCourses(coursesRes.data ?? []);
+        setAnswers(answersRes.data ?? []);
+        
+        // Fetch tests for all student's courses
+        if (coursesRes.data && coursesRes.data.length > 0) {
+          const allTests = [];
+          for (const course of coursesRes.data) {
+            try {
+              const testsRes = await testsAPI.getCourseTests(course.id);
+              if (testsRes.data) {
+                allTests.push(...testsRes.data);
+              }
+            } catch (error) {
+              console.error(`Failed to fetch tests for course ${course.id}:`, error);
+            }
+          }
+          setTests(allTests);
+        }
+      } catch (error) {
+        console.error('Failed to fetch data:', error);
+        toast.error('Failed to fetch dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const fetchDashboardData = async () => {
-    try {
-      const [coursesRes, testsRes, answersRes] = await Promise.all([
-        coursesAPI.getStudentCourses(),
-        testsAPI.getTeacherTests(), // This will need to be filtered for student's courses
-        studentAnswersAPI.getStudentAnswers(),
-      ]);
-      
-      setCourses(coursesRes.data);
-      setTests(testsRes.data);
-      setAnswers(answersRes.data);
-    } catch (error) {
-      console.error('Failed to fetch dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    fetchData();
+  }, []);
 
   const stats = [
     {

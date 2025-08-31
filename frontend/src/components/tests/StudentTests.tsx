@@ -1,29 +1,33 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  BookOpen, 
-  Calendar, 
   FileText, 
-  Clock,
-  X,
+  Clock, 
+  BookOpen, 
+  Play,
   CheckCircle,
   AlertCircle,
-  Play,
-  Users,
-  Eye
+  Calendar
 } from 'lucide-react';
 import { coursesAPI, testsAPI, questionsAPI, studentAnswersAPI } from '../../services/api';
 import { Course, Test, Question } from '../../types';
 import toast from 'react-hot-toast';
 import { useAuth } from '../../contexts/AuthContext';
 
-const StudentCourses: React.FC = () => {
+// Extended test type with course information
+type TestWithCourse = Test & {
+  course_title: string;
+  course_subject: string;
+  submitted?: boolean;
+};
+
+const StudentTests: React.FC = () => {
   const { user } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
-  const [tests, setTests] = useState<Test[]>([]);
+  const [tests, setTests] = useState<TestWithCourse[]>([]);
   const [loading, setLoading] = useState(true);
   
   // Test taking state
-  const [selectedTest, setSelectedTest] = useState<Test | null>(null);
+  const [selectedTest, setSelectedTest] = useState<TestWithCourse | null>(null);
   const [testQuestions, setTestQuestions] = useState<Question[]>([]);
   const [testAnswers, setTestAnswers] = useState<Record<string, string>>({});
   const [showTestModal, setShowTestModal] = useState(false);
@@ -36,7 +40,6 @@ const StudentCourses: React.FC = () => {
       try {
         setLoading(true);
         const coursesRes = await coursesAPI.getStudentCourses();
-        
         setCourses(coursesRes.data ?? []);
         
         // Fetch tests for all courses the student is enrolled in
@@ -46,7 +49,13 @@ const StudentCourses: React.FC = () => {
             try {
               const testsRes = await testsAPI.getCourseTests(course.id);
               if (testsRes.data) {
-                allTests.push(...testsRes.data);
+                // Add course info to each test
+                const testsWithCourse = testsRes.data.map((test: Test) => ({
+                  ...test,
+                  course_title: course.title,
+                  course_subject: course.subject
+                }));
+                allTests.push(...testsWithCourse);
               }
             } catch (error) {
               console.error(`Failed to fetch tests for course ${course.id}:`, error);
@@ -56,7 +65,7 @@ const StudentCourses: React.FC = () => {
         }
       } catch (error) {
         console.error('Failed to fetch data:', error);
-        toast.error('Failed to fetch course data');
+        toast.error('Failed to fetch courses and tests');
       } finally {
         setLoading(false);
       }
@@ -65,13 +74,8 @@ const StudentCourses: React.FC = () => {
     fetchData();
   }, []);
 
-  // Filter tests for courses the student is enrolled in
-  const getTestsForCourse = (courseId: string) => {
-    return tests.filter(test => test.course_id === courseId);
-  };
-
   // Start test and fetch questions
-  const startTest = async (test: Test) => {
+  const startTest = async (test: TestWithCourse) => {
     try {
       setTestLoading(true);
       setSelectedTest(test);
@@ -103,6 +107,24 @@ const StudentCourses: React.FC = () => {
     }
   };
 
+  // Timer effect
+  useEffect(() => {
+    if (timeRemaining > 0 && showTestModal && !testSubmitted) {
+      const timer = setInterval(() => {
+        setTimeRemaining(prev => {
+          if (prev <= 1) {
+            // Auto-submit when time runs out
+            submitTest();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      return () => clearInterval(timer);
+    }
+  }, [timeRemaining, showTestModal, testSubmitted]);
+
   // Submit test answers
   const submitTest = async () => {
     if (!selectedTest || testSubmitted) return;
@@ -113,8 +135,8 @@ const StudentCourses: React.FC = () => {
       const testAnswerData = {
         test_id: selectedTest.id,
         course_id: selectedTest.course_id,
-        student_name: "Student Name", // This should come from user context
-        student_roll_no: "Roll Number", // This should come from user context
+        student_name: user?.first_name + ' ' + user?.last_name || "Student",
+        student_roll_no: user?.username || "Roll Number",
         question_answers: testAnswers
       };
       
@@ -137,24 +159,6 @@ const StudentCourses: React.FC = () => {
     }
   };
 
-  // Timer effect
-  useEffect(() => {
-    if (timeRemaining > 0 && showTestModal && !testSubmitted) {
-      const timer = setInterval(() => {
-        setTimeRemaining(prev => {
-          if (prev <= 1) {
-            // Auto-submit when time runs out
-            submitTest();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-
-      return () => clearInterval(timer);
-    }
-  }, [timeRemaining, showTestModal, testSubmitted, submitTest]);
-
   // Format time remaining
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -172,6 +176,10 @@ const StudentCourses: React.FC = () => {
     setTimeRemaining(0);
   };
 
+  // Filter tests by status
+  const pendingTests = tests.filter(test => test.is_active);
+  const completedTests = tests.filter(test => !test.is_active || test.submitted);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -187,107 +195,128 @@ const StudentCourses: React.FC = () => {
         <div className="p-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl font-bold text-white">My Courses</h1>
-              <p className="text-gray-300">View your enrolled courses and available tests</p>
+              <h1 className="text-2xl font-bold text-white">My Tests</h1>
+              <p className="text-gray-300">View and take your pending tests</p>
             </div>
             <div className="flex items-center gap-4 text-sm">
               <div className="flex items-center gap-2 text-gray-400">
-                <BookOpen className="h-4 w-4" />
-                {courses.length} courses
+                <FileText className="h-4 w-4" />
+                {pendingTests.length} pending
               </div>
               <div className="flex items-center gap-2 text-gray-400">
-                <FileText className="h-4 w-4" />
-                {tests.filter(test => test.is_active).length} active tests
+                <CheckCircle className="h-4 w-4" />
+                {completedTests.length} completed
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Courses Grid - Clean Compact Design */}
-      {courses.length === 0 ? (
-        <div className="text-center py-12 bg-dark-900 rounded-xl border border-dark-800">
-          <BookOpen className="mx-auto h-12 w-12 text-gray-400 mb-3" />
-          <h3 className="text-lg font-semibold text-white mb-2">No courses enrolled</h3>
-          <p className="text-gray-400 mb-4 max-w-md mx-auto">
-            You haven't been enrolled in any courses yet. Contact your teacher to get started.
-          </p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {courses.map((course) => {
-            const activeTests = getTestsForCourse(course.id);
-            const hasActiveTests = activeTests.length > 0;
-            
-            return (
-              <div 
-                key={course.id}
-                className="bg-dark-900 rounded-lg border border-dark-800 transition-all duration-200 hover:shadow-lg hover:border-primary-500/50 group"
-              >
-                {/* Compact Course Tile */}
-                <div className="p-3">
-                  {/* Metadata Row */}
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-primary-600 text-white">
-                      {course.subject}
-                    </span>
-                    <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-600 text-white">
-                      {activeTests.filter(t => t.is_active).length}/{activeTests.length}
-                    </span>
-                  </div>
-                  
-                  {/* Course Title - Clamped */}
-                  <h3 className="text-sm font-medium text-white leading-tight line-clamp-2 mb-2 group-hover:text-primary-300 transition-colors">
-                    {course.title}
-                  </h3>
-                  
-                  {/* Course Description - Clamped */}
-                  <p className="text-xs text-gray-400 line-clamp-2 mb-3">
-                    {course.description}
-                  </p>
-                  
-                  {/* Course Stats - Compact */}
-                  <div className="flex items-center gap-3 mb-3 text-xs text-gray-400">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {course.academic_year}
+      {/* Pending Tests */}
+      <div className="bg-dark-900 rounded-xl border border-dark-800 shadow-lg">
+        <div className="p-4">
+          <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+            <AlertCircle className="h-5 w-5 text-orange-400" />
+            Pending Tests ({pendingTests.length})
+          </h2>
+          
+          {pendingTests.length === 0 ? (
+            <div className="text-center py-8">
+              <FileText className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+              <h3 className="text-lg font-medium text-white mb-2">No pending tests</h3>
+              <p className="text-gray-400">All your tests are completed or not yet available.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {pendingTests.map((test) => (
+                <div key={test.id} className="bg-dark-800 rounded-lg border border-dark-700 hover:border-primary-500/50 transition-all duration-200">
+                  <div className="p-4">
+                    {/* Test Header */}
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-white mb-1 line-clamp-2">
+                          {test.title}
+                        </h3>
+                        <p className="text-sm text-gray-400 mb-2">
+                          {test.course_title} • {test.course_subject}
+                        </p>
+                      </div>
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-600 text-white">
+                        Active
+                      </span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Users className="h-3 w-3" />
-                      {course.student_ids?.length || 0} students
+                    
+                    {/* Test Details */}
+                    <div className="grid grid-cols-2 gap-3 mb-4">
+                      <div className="text-center p-2 bg-dark-700 rounded border border-dark-600">
+                        <div className="text-lg font-bold text-blue-400">{test.duration_minutes}</div>
+                        <div className="text-xs text-blue-400">Minutes</div>
+                      </div>
+                      <div className="text-center p-2 bg-dark-700 rounded border border-dark-600">
+                        <div className="text-lg font-bold text-green-400">{test.question_ids?.length || 0}</div>
+                        <div className="text-xs text-green-400">Questions</div>
+                      </div>
                     </div>
-                  </div>
-                  
-                  {/* Quick Actions */}
-                  <div className="flex items-center justify-between mt-3 pt-3 border-t border-dark-800">
-                    <div className="flex gap-1">
-                      {hasActiveTests ? (
-                        <button
-                          onClick={() => {
-                            const firstTest = activeTests.find(t => t.is_active);
-                            if (firstTest) startTest(firstTest);
-                          }}
-                          className="p-1.5 text-primary-400 hover:text-primary-300 hover:bg-primary-500/10 rounded transition-colors"
-                          title="Take Test"
-                        >
-                          <Play className="h-3.5 w-3.5" />
-                        </button>
-                      ) : (
-                        <span className="p-1.5 text-gray-500 text-xs">No tests</span>
-                      )}
-                    </div>
+                    
+                    {/* Test Description */}
+                    {test.description && (
+                      <p className="text-sm text-gray-400 mb-4 line-clamp-2">
+                        {test.description}
+                      </p>
+                    )}
+                    
+                    {/* Action Button */}
                     <button
-                      onClick={() => {/* Navigate to course details */}}
-                      className="p-1.5 text-gray-400 hover:text-blue-400 hover:bg-blue-500/10 rounded transition-colors"
-                      title="Course Details"
+                      onClick={() => startTest(test)}
+                      className="w-full btn-primary py-2 px-4 text-sm flex items-center justify-center gap-2"
                     >
-                      <Eye className="h-3.5 w-3.5" />
+                      <Play className="h-4 w-4" />
+                      Start Test
                     </button>
                   </div>
                 </div>
-              </div>
-            );
-          })}
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Completed Tests */}
+      {completedTests.length > 0 && (
+        <div className="bg-dark-900 rounded-xl border border-dark-800 shadow-lg">
+          <div className="p-4">
+            <h2 className="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-400" />
+              Completed Tests ({completedTests.length})
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {completedTests.map((test) => (
+                <div key={test.id} className="bg-dark-800 rounded-lg border border-dark-700 opacity-75">
+                  <div className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <h3 className="text-lg font-semibold text-white mb-1 line-clamp-2">
+                          {test.title}
+                        </h3>
+                        <p className="text-sm text-gray-400 mb-2">
+                          {test.course_title} • {test.course_subject}
+                        </p>
+                      </div>
+                      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-600 text-white">
+                        Completed
+                      </span>
+                    </div>
+                    
+                    <div className="text-center py-4">
+                      <CheckCircle className="mx-auto h-8 w-8 text-green-400 mb-2" />
+                      <p className="text-sm text-gray-400">Test completed</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
 
@@ -300,13 +329,13 @@ const StudentCourses: React.FC = () => {
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-xl font-bold text-white">{selectedTest.title}</h2>
-                  <p className="text-sm text-gray-400">Course: {courses.find(c => c.id === selectedTest.course_id)?.title}</p>
+                  <p className="text-sm text-gray-400">Course: {selectedTest.course_title}</p>
                 </div>
                 <button
                   onClick={closeTestModal}
                   className="text-gray-400 hover:text-white p-2 hover:bg-dark-800 rounded-lg transition-colors"
                 >
-                  <X className="h-5 w-5" />
+                  <Clock className="h-5 w-5" />
                 </button>
               </div>
               
@@ -400,4 +429,4 @@ const StudentCourses: React.FC = () => {
   );
 };
 
-export default StudentCourses;
+export default StudentTests;

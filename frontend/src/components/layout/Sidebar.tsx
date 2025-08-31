@@ -35,7 +35,7 @@ const Sidebar: React.FC<SidebarProps> = ({ open, setOpen }) => {
   const studentNavigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home, end: true },
     { name: 'My Courses', href: '/dashboard/courses', icon: BookOpen },
-    { name: 'My Tests', href: '/dashboard/tests', icon: FileText },
+    { name: 'Tests', href: '/dashboard/tests', icon: FileText },
     { name: 'My Answers', href: '/dashboard/answers', icon: Users },
     { name: 'Profile', href: '/dashboard/profile', icon: Settings },
   ];

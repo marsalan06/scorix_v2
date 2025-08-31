@@ -10,6 +10,7 @@ import CourseManagement from './courses/CourseManagement';
 import StudentCourses from './courses/StudentCourses';
 import QuestionManagement from './questions/QuestionManagement';
 import TestManagement from './tests/TestManagement';
+import StudentTests from './tests/StudentTests';
 import GradingInterface from './grading/GradingInterface';
 import StudentAnswers from './answers/StudentAnswers';
 import Profile from './profile/Profile';
@@ -49,9 +50,15 @@ const Dashboard: React.FC = () => {
               <Route path="/courses" element={
                 user.role === 'student' ? <StudentCourses /> : <CourseManagement />
               } />
-              <Route path="/questions" element={<QuestionManagement />} />
-              <Route path="/tests" element={<TestManagement />} />
-              <Route path="/grading" element={<GradingInterface />} />
+              <Route path="/questions" element={
+                user.role !== 'student' ? <QuestionManagement /> : null
+              } />
+              <Route path="/tests" element={
+                user.role === 'student' ? <StudentTests /> : <TestManagement />
+              } />
+              <Route path="/grading" element={
+                user.role !== 'student' ? <GradingInterface /> : null
+              } />
               <Route path="/answers" element={<StudentAnswers />} />
               <Route path="/profile" element={<Profile />} />
               
@@ -60,9 +67,15 @@ const Dashboard: React.FC = () => {
               <Route path="/dashboard/courses" element={
                 user.role === 'student' ? <StudentCourses /> : <CourseManagement />
               } />
-              <Route path="/dashboard/questions" element={<QuestionManagement />} />
-              <Route path="/dashboard/tests" element={<TestManagement />} />
-              <Route path="/dashboard/grading" element={<GradingInterface />} />
+              <Route path="/dashboard/questions" element={
+                user.role !== 'student' ? <QuestionManagement /> : null
+              } />
+              <Route path="/dashboard/tests" element={
+                user.role === 'student' ? <StudentTests /> : <TestManagement />
+              } />
+              <Route path="/dashboard/grading" element={
+                user.role !== 'student' ? <GradingInterface /> : null
+              } />
               <Route path="/dashboard/answers" element={<StudentAnswers />} />
               <Route path="/dashboard/profile" element={<Profile />} />
             </Routes>

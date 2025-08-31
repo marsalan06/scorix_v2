@@ -14,8 +14,10 @@ import {
 import { studentAnswersAPI, coursesAPI, testsAPI } from '../../services/api';
 import { StudentAnswer, TestAnswer, Course, Test } from '../../types';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../contexts/AuthContext';
 
 const StudentAnswers: React.FC = () => {
+  const { user } = useAuth();
   const [studentAnswers, setStudentAnswers] = useState<StudentAnswer[]>([]);
   const [testAnswers, setTestAnswers] = useState<TestAnswer[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
@@ -31,16 +33,21 @@ const StudentAnswers: React.FC = () => {
   const fetchData = useCallback(async () => {
     try {
       setLoading(true);
-      const [coursesRes, testsRes] = await Promise.all([
-        coursesAPI.getTeacherCourses(),
-        testsAPI.getTeacherTests(),
-      ]);
+      const coursesRes = user?.role === 'student' 
+        ? await coursesAPI.getStudentCourses()
+        : await coursesAPI.getTeacherCourses();
       
       setCourses(coursesRes.data ?? []);
-      setTests(testsRes.data ?? []);
       
       if (coursesRes.data && coursesRes.data.length > 0) {
         setSelectedCourseId(coursesRes.data[0].id);
+      }
+      
+      // For students, we'll fetch tests when a course is selected
+      // For teachers, we can fetch all tests
+      if (user?.role === 'teacher') {
+        const testsRes = await testsAPI.getTeacherTests();
+        setTests(testsRes.data ?? []);
       }
     } catch (error) {
       console.error('Failed to fetch data:', error);
@@ -48,7 +55,7 @@ const StudentAnswers: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [user?.role]);
 
   const fetchCourseAnswers = useCallback(async (courseId: string) => {
     if (courseId === 'all') return;
@@ -56,11 +63,22 @@ const StudentAnswers: React.FC = () => {
     try {
       const response = await studentAnswersAPI.getCourseAnswers(courseId);
       setStudentAnswers(response.data ?? []);
+      
+      // For students, also fetch tests for the selected course
+      if (user?.role === 'student') {
+        try {
+          const testsRes = await testsAPI.getCourseTests(courseId);
+          setTests(testsRes.data ?? []);
+        } catch (error) {
+          console.error('Failed to fetch tests for course:', error);
+          setTests([]);
+        }
+      }
     } catch (error) {
       console.error('Failed to fetch course answers:', error);
       toast.error('Failed to fetch course answers');
     }
-  }, []);
+  }, [user?.role]);
 
   useEffect(() => {
     fetchData();
@@ -69,8 +87,18 @@ const StudentAnswers: React.FC = () => {
   useEffect(() => {
     if (viewMode === 'course' && selectedCourseId !== 'all') {
       fetchCourseAnswers(selectedCourseId);
+    } else if (viewMode === 'test' && selectedCourseId !== 'all') {
+      // Fetch tests for the selected course when in test mode
+      if (user?.role === 'student') {
+        testsAPI.getCourseTests(selectedCourseId)
+          .then(response => setTests(response.data ?? []))
+          .catch(error => {
+            console.error('Failed to fetch tests for course:', error);
+            setTests([]);
+          });
+      }
     }
-  }, [viewMode, selectedCourseId, fetchCourseAnswers]);
+  }, [viewMode, selectedCourseId, fetchCourseAnswers, user?.role]);
 
   // Helper function to get course name by ID
   const getCourseName = (courseId: string) => {
