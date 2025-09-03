@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { coursesAPI } from '../../services/api';
 import { Course, CourseCreate, CourseUpdate } from '../../types';
+import { getErrorMessage } from '../../utils/errorHandler';
 import toast from 'react-hot-toast';
 
 const CourseManagement: React.FC = () => {
@@ -118,9 +119,10 @@ const CourseManagement: React.FC = () => {
       setEnrollStudentId('');
       setSelectedCourse(null);
       fetchCourses();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to enroll student:', error);
-      toast.error('Failed to enroll student');
+      const errorMessage = getErrorMessage(error, 'Failed to enroll student');
+      toast.error(errorMessage);
     }
   };
 
@@ -133,9 +135,10 @@ const CourseManagement: React.FC = () => {
       await coursesAPI.unenrollStudent(courseId, studentId);
       toast.success('Student removed successfully');
       fetchCourses();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to remove student:', error);
-      toast.error('Failed to remove student');
+      const errorMessage = getErrorMessage(error, 'Failed to remove student');
+      toast.error(errorMessage);
     }
   };
 

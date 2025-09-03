@@ -435,16 +435,30 @@ async def enroll_student(
     current_user: dict = Depends(get_current_teacher)
 ):
     """Enroll a student in a course (Teachers and Admins only)"""
+    print(f"DEBUG: enroll_student called with course_id = {course_id}")
+    print(f"DEBUG: current_user = {current_user}")
+    print(f"DEBUG: enrollment = {enrollment}")
+    
     # Verify course belongs to teacher
     course = await get_course_by_id(course_id)
-    if not course or course["teacher_id"] != current_user["id"]:
-        raise HTTPException(status_code=404, detail="Course not found")
+    print(f"DEBUG: course found = {course}")
     
-    success = await enroll_student_in_course(course_id, enrollment.student_id)
-    if not success:
-        raise HTTPException(status_code=400, detail="Failed to enroll student")
+    if not course:
+        print(f"DEBUG: Course not found with ID: {course_id}")
+        raise HTTPException(status_code=404, detail=f"Course not found with ID: {course_id}")
     
-    return {"message": "Student enrolled successfully"}
+    if course["teacher_id"] != current_user["id"]:
+        print(f"DEBUG: Course ownership mismatch. Course teacher_id: {course['teacher_id']}, Current user id: {current_user['id']}")
+        raise HTTPException(status_code=403, detail=f"Access denied. Course belongs to another teacher")
+    
+    result = await enroll_student_in_course(course_id, enrollment.student_id)
+    if not result["success"]:
+        if "already enrolled" in result["error"]:
+            raise HTTPException(status_code=409, detail=result["error"])
+        else:
+            raise HTTPException(status_code=400, detail=result["error"])
+    
+    return {"message": result["message"]}
 
 @app.delete("/courses/{course_id}/unenroll/{student_id}", response_model=Dict[str, str], tags=["Courses"])
 async def unenroll_student(
@@ -458,11 +472,14 @@ async def unenroll_student(
     if not course or course["teacher_id"] != current_user["id"]:
         raise HTTPException(status_code=404, detail="Course not found")
     
-    success = await remove_student_from_course(course_id, student_id)
-    if not success:
-        raise HTTPException(status_code=400, detail="Failed to remove student")
+    result = await remove_student_from_course(course_id, student_id)
+    if not result["success"]:
+        if "not enrolled" in result["error"]:
+            raise HTTPException(status_code=404, detail=result["error"])
+        else:
+            raise HTTPException(status_code=400, detail=result["error"])
     
-    return {"message": "Student removed successfully"}
+    return {"message": result["message"]}
 
 # ==================== QUESTION MANAGEMENT ENDPOINTS ====================
 

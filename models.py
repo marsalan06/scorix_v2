@@ -97,7 +97,6 @@ class CourseResponse(CourseBase):
         from_attributes = True
 
 class CourseEnrollment(BaseModel):
-    course_id: str
     student_id: str
 
 class QuestionBase(BaseModel):

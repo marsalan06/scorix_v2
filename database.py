@@ -183,7 +183,10 @@ async def db_save_course(course_data: Dict[str, Any]) -> str:
     return course_id
 async def get_course_by_id(course_id: str) -> Optional[Dict[str, Any]]:
     """Get course by ID"""
+    print(f"DEBUG: get_course_by_id called with course_id = {course_id}")
     course = await courses_collection.find_one({"id": course_id})
+    print(f"DEBUG: Raw course from database: {course}")
+    
     if course:
         course["_id"] = str(course["_id"])
         # Ensure all required fields are present
@@ -193,6 +196,10 @@ async def get_course_by_id(course_id: str) -> Optional[Dict[str, Any]]:
             course["created_at"] = datetime.now()
         if "updated_at" not in course:
             course["updated_at"] = datetime.now()
+        print(f"DEBUG: Processed course: {course}")
+    else:
+        print(f"DEBUG: No course found with ID: {course_id}")
+    
     return course
 async def get_courses_by_teacher(teacher_id: str) -> List[Dict[str, Any]]:
     """Get all courses for a teacher"""
@@ -220,20 +227,46 @@ async def get_courses_by_student(student_id: str) -> List[Dict[str, Any]]:
         if "updated_at" not in course:
             course["updated_at"] = datetime.now()
     return courses
-async def enroll_student_in_course(course_id: str, student_id: str) -> bool:
+async def enroll_student_in_course(course_id: str, student_id: str) -> Dict[str, Any]:
     """Enroll a student in a course"""
+    # First check if student is already enrolled
+    course = await courses_collection.find_one({"id": course_id})
+    if not course:
+        return {"success": False, "error": "Course not found"}
+    
+    if student_id in course.get("student_ids", []):
+        return {"success": False, "error": "Student is already enrolled in this course"}
+    
+    # Enroll the student
     result = await courses_collection.update_one(
         {"id": course_id},
         {"$addToSet": {"student_ids": student_id}}
     )
-    return result.modified_count > 0
-async def remove_student_from_course(course_id: str, student_id: str) -> bool:
+    
+    if result.modified_count > 0:
+        return {"success": True, "message": "Student enrolled successfully"}
+    else:
+        return {"success": False, "error": "Failed to enroll student"}
+async def remove_student_from_course(course_id: str, student_id: str) -> Dict[str, Any]:
     """Remove a student from a course"""
+    # First check if student is enrolled
+    course = await courses_collection.find_one({"id": course_id})
+    if not course:
+        return {"success": False, "error": "Course not found"}
+    
+    if student_id not in course.get("student_ids", []):
+        return {"success": False, "error": "Student is not enrolled in this course"}
+    
+    # Remove the student
     result = await courses_collection.update_one(
         {"id": course_id},
         {"$pull": {"student_ids": student_id}}
     )
-    return result.modified_count > 0
+    
+    if result.modified_count > 0:
+        return {"success": True, "message": "Student removed successfully"}
+    else:
+        return {"success": False, "error": "Failed to remove student"}
 async def db_update_course(course_id: str, teacher_id: str, update_data: Dict[str, Any]) -> bool:
     """Update a course"""
     update_data["updated_at"] = datetime.now()

@@ -64,7 +64,7 @@ export const coursesAPI = {
   updateCourse: (id: string, courseData: any) => api.put(`/courses/${id}`, courseData),
   deleteCourse: (id: string) => api.delete(`/courses/${id}`),
   enrollStudent: (courseId: string, studentId: string) =>
-    api.post(`/courses/${courseId}/enroll`, { course_id: courseId, student_id: studentId }),
+    api.post(`/courses/${courseId}/enroll`, { student_id: studentId }),
   unenrollStudent: (courseId: string, studentId: string) =>
     api.delete(`/courses/${courseId}/unenroll/${studentId}`),
 };
